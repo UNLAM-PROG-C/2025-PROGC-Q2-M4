@@ -1,0 +1,33 @@
+{
+  "mode": "direct",
+  "dimensions": {
+    "A": [
+      1000,
+      1000
+    ],
+    "B": [
+      1000,
+      1000
+    ],
+    "C": [
+      1000,
+      1000
+    ]
+  },
+  "verification": {
+    "enabled": false,
+    "passed": true
+  },
+  "operations_theoretical": {
+    "multiplications": 1000000000,
+    "additions": 999000000,
+    "total": 1999000000
+  },
+  "patterns": {
+    "A": "random",
+    "B": "random"
+  },
+  "generation_time": 0.02479440000024624,
+  "multiplication_time": 1.894199700000172,
+  "wall_total": 1.8942074999995384
+}

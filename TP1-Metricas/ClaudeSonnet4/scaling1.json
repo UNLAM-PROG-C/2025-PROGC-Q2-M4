@@ -1,0 +1,40 @@
+{
+  "dimensions": {
+    "A": [
+      1000,
+      1000
+    ],
+    "B": [
+      1000,
+      1000
+    ]
+  },
+  "patterns": {
+    "A": "random",
+    "B": "random"
+  },
+  "generation_time": 1.131810000000769,
+  "repeats": 3,
+  "results": {
+    "8": {
+      "times": [
+        43.86919549999948,
+        42.402578999999605,
+        41.413723100000425
+      ],
+      "average": 42.56183253333317,
+      "min": 41.413723100000425,
+      "max": 43.86919549999948,
+      "operations": {
+        "multiplications_real": 1000000000,
+        "additions_real": 999000000,
+        "total_real": 1999000000,
+        "theoretical": {
+          "multiplications": 1000000000,
+          "additions": 999000000,
+          "total": 1999000000
+        }
+      }
+    }
+  }
+}

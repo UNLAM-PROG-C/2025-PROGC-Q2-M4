@@ -1,0 +1,34 @@
+{
+  "mode": "blocked",
+  "dimensions": {
+    "A": [
+      1000,
+      1000
+    ],
+    "B": [
+      1000,
+      1000
+    ],
+    "C": [
+      1000,
+      1000
+    ]
+  },
+  "verification": {
+    "enabled": false,
+    "passed": true
+  },
+  "operations_theoretical": {
+    "multiplications": 1000000000,
+    "additions": 999000000,
+    "total": 1999000000
+  },
+  "block_size": 96,
+  "patterns": {
+    "A": "random",
+    "B": "random"
+  },
+  "generation_time": 0.024912599999879603,
+  "multiplication_time": 1.0794181999990542,
+  "wall_total": 1.0794248999991396
+}
