@@ -1,0 +1,34 @@
+{
+  "scaling": [
+    {
+      "workers": 8,
+      "avg_time": 41.04974500000026,
+      "runs": [
+        42.02324589999989,
+        39.666777000000366,
+        41.459212100000514
+      ],
+      "mode": "blocked",
+      "method": "process"
+    }
+  ],
+  "dimensions": {
+    "A": [
+      1000,
+      1000
+    ],
+    "B": [
+      1000,
+      1000
+    ],
+    "C": [
+      1000,
+      1000
+    ]
+  },
+  "mode": "blocked",
+  "method": "process",
+  "pattern": "A:random,B:random",
+  "block_rows": 96,
+  "block_cols": 96
+}
