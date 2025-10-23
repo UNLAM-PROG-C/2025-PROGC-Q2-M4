@@ -7,6 +7,12 @@ public class Piece : MonoBehaviour
     public Vector3Int position { get; private set; } //this is used for tilemaps, tilemaps use Vector3Ints instead of Vector2Ints
     public Vector3Int[] cells { get; private set; } //variable to handle piece rotations
     public int rotationIndex { get; private set; } //variable to handle piece rotations
+    public float stepDelay = 1f; //time delay for piece to move down automatically
+    public float lockDelay = 0.5f; //time delay before piece locks in place after reaching the bottom
+
+    private float stepTime;
+    private float lockTime;
+
 
     public void Initialize(Board board, Vector3Int V3Position, TetrisBlockShapeData TBSData)
     {
@@ -14,6 +20,8 @@ public class Piece : MonoBehaviour
         this.position = V3Position;
         this.TBSData = TBSData;
         this.rotationIndex = 0;
+        this.stepTime = Time.time + this.stepDelay;
+        this.lockTime = 0f;
 
         if (this.cells == null)
         {
@@ -32,6 +40,7 @@ public class Piece : MonoBehaviour
     {
         this.board.Clear(this);
 
+        this.lockTime += Time.deltaTime;
 
         if (Input.GetKeyDown(KeyCode.A))
         {
@@ -68,8 +77,33 @@ public class Piece : MonoBehaviour
             RotatePiece(1);
         }
 
+        if (Time.time >= this.stepTime)
+        {
+            Step();
+        }
+
         this.board.Set(this);
 
+    }
+
+    public void Step()
+    {
+        this.stepTime = Time.time + this.stepDelay;
+
+        MovePiece(Vector2Int.down);
+
+
+        //eventually lock the piece if it can't move down anymore
+        if (this.lockTime >= this.lockDelay)
+        {
+            Lock();
+        }
+    }
+
+    public void Lock()
+    {
+        this.board.Set(this);
+        this.board.SpawnPiece();
     }
 
     public bool MovePiece(Vector2Int translation)
@@ -83,6 +117,7 @@ public class Piece : MonoBehaviour
         if (isValidPosition)
         {
             this.position = newPosition;
+            this.lockTime = 0f;
         }
 
         return isValidPosition;
@@ -95,6 +130,8 @@ public class Piece : MonoBehaviour
         {
             continue;
         }
+
+        Lock();
     }
 
     public void RotatePiece(int direction)
