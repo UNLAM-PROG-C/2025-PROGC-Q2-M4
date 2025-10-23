@@ -8,12 +8,12 @@ public class Board : MonoBehaviour
     public Piece activePiece { get; private set; }
     public Vector3Int spawnPos;
     public Vector2Int boardBoundsSize = new Vector2Int(10, 20);
-    
+
     public RectInt Bounds
     {
         get
         {
-            Vector2Int position = new Vector2Int(-this.boardBoundsSize.x/2 , -this.boardBoundsSize.y/2);
+            Vector2Int position = new Vector2Int(-this.boardBoundsSize.x / 2, -this.boardBoundsSize.y / 2);
             return new RectInt(position, this.boardBoundsSize);
         }
     }
@@ -59,7 +59,7 @@ public class Board : MonoBehaviour
         for (int i = 0; i < piece.cells.Length; i++)
         {
             Vector3Int tilePosition = piece.cells[i] + piece.position; //set the piece to their default piece value + the new coordinate on the board
-            this.tilemap.SetTile(tilePosition,null);
+            this.tilemap.SetTile(tilePosition, null);
         }
     }
 
@@ -92,4 +92,62 @@ public class Board : MonoBehaviour
         return true;
     }
 
+    public void ClearLines()
+    {
+        RectInt bounds = this.Bounds;
+        int row = bounds.yMin;
+
+        while (row < bounds.yMax)
+        {
+            if (IsLineFull(row))
+            {
+                LineClear(row);
+            } else
+            {
+                row++;
+            }
+        }
+    }
+
+    public bool IsLineFull(int row)
+    {
+        RectInt bounds = this.Bounds;
+        for (int col = bounds.xMin; col < bounds.xMax; col++)
+        {
+            Vector3Int position = new Vector3Int(col, row, 0);
+
+            if(!this.tilemap.HasTile(position))
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    public void LineClear(int row)
+    {
+        RectInt bounds = this.Bounds;
+
+        for (int col = bounds.xMin; col < bounds.xMax; col++)
+        {
+            Vector3Int position = new Vector3Int(col, row, 0);
+
+            this.tilemap.SetTile(position, null);
+        }
+
+        while (row < bounds.yMax)
+        {
+            for (int col = bounds.xMin; col < bounds.xMax; col++)
+            {
+                Vector3Int position = new Vector3Int(col, row+1, 0);
+                TileBase above = this.tilemap.GetTile(position);
+
+                position = new Vector3Int(col, row, 0);
+                this.tilemap.SetTile(position, above);
+            }
+
+            row++;
+        }
+    }
 }

@@ -103,6 +103,7 @@ public class Piece : MonoBehaviour
     public void Lock()
     {
         this.board.Set(this);
+        this.board.ClearLines();
         this.board.SpawnPiece();
     }
 
