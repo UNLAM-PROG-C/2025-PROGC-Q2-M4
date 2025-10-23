@@ -40,7 +40,15 @@ public class Board : MonoBehaviour
         TetrisBlockShapeData data = this.TetrisBlocks[random];
 
         this.activePiece.Initialize(this, spawnPos, data);
-        Set(this.activePiece);
+
+        if (IsValidPosition(this.activePiece, this.spawnPos))
+        {
+            Set(this.activePiece);
+        } else {
+            GameOver();
+        }
+
+
     }
 
     public void Set(Piece piece)
@@ -149,5 +157,10 @@ public class Board : MonoBehaviour
 
             row++;
         }
+    }
+
+    private void GameOver()
+    {
+        this.tilemap.ClearAllTiles();
     }
 }
