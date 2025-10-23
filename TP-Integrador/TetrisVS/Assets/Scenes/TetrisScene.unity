@@ -223,7 +223,8 @@ MonoBehaviour:
     tile: {fileID: 11400000, guid: d712e746ed153ec46b7fa5d3ccdadf31, type: 2}
   - Shape: 6
     tile: {fileID: 11400000, guid: 4690047d8c824744cad03f03ea6fe19b, type: 2}
-  spawnPos: {x: 0, y: 0, z: 0}
+  spawnPos: {x: -1, y: 8, z: 0}
+  boardBoundsSize: {x: 10, y: 20}
 --- !u!114 &329705363
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -279,6 +280,7 @@ GameObject:
   - component: {fileID: 1009298440}
   - component: {fileID: 1009298439}
   - component: {fileID: 1009298442}
+  - component: {fileID: 1009298443}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -323,7 +325,7 @@ Camera:
     serializedVersion: 2
     x: 0
     y: 0
-    width: 1
+    width: 0.4
     height: 1
   near clip plane: 0.3
   far clip plane: 1000
@@ -404,6 +406,36 @@ MonoBehaviour:
     m_VarianceClampScale: 0.9
     m_ContrastAdaptiveSharpening: 0
   m_Version: 2
+--- !u!114 &1009298443
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1009298438}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 62899f850307741f2a39c98a8b639597, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.InputSystem::UnityEngine.InputSystem.PlayerInput
+  m_Actions: {fileID: -944628639613478452, guid: 2bcd2660ca9b64942af0de543d8d7100, type: 3}
+  m_NotificationBehavior: 0
+  m_UIInputModule: {fileID: 0}
+  m_DeviceLostEvent:
+    m_PersistentCalls:
+      m_Calls: []
+  m_DeviceRegainedEvent:
+    m_PersistentCalls:
+      m_Calls: []
+  m_ControlsChangedEvent:
+    m_PersistentCalls:
+      m_Calls: []
+  m_ActionEvents: []
+  m_NeverAutoSwitchControlSchemes: 0
+  m_DefaultControlScheme: 
+  m_DefaultActionMap: 
+  m_SplitScreenIndex: -1
+  m_Camera: {fileID: 0}
 --- !u!1 &1200355181
 GameObject:
   m_ObjectHideFlags: 0
