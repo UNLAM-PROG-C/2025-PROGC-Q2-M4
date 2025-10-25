@@ -8,6 +8,7 @@ public class Board : MonoBehaviour
     public Piece activePiece { get; private set; }
     public Vector3Int spawnPos;
     public Vector2Int boardBoundsSize = new Vector2Int(10, 20);
+    public ShapesQueue shapesQueue = new ShapesQueue();
 
     public RectInt Bounds
     {
@@ -36,8 +37,7 @@ public class Board : MonoBehaviour
 
     public void SpawnPiece()
     {
-        int random = Random.Range(0, this.TetrisBlocks.Length);
-        TetrisBlockShapeData data = this.TetrisBlocks[random];
+        TetrisBlockShapeData data = this.TetrisBlocks[shapesQueue.getShape()];
 
         this.activePiece.Initialize(this, spawnPos, data);
 
