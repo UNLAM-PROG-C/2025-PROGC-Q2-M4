@@ -1034,6 +1034,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Settings
   MixerMusicEffects: {fileID: 24100000, guid: 094cc262108e40f4db7582090ec88b8b, type: 2}
   MixerSoundEffects: {fileID: 24100000, guid: 890e42074664a8e48a35788f010615a3, type: 2}
+  DifficultyDropDown: {fileID: 1926090797}
+  musicSlider: {fileID: 430608400}
+  soundSlider: {fileID: 890034662}
 --- !u!114 &577275115
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2746,7 +2749,7 @@ GameObject:
   - component: {fileID: 1926090798}
   - component: {fileID: 1926090797}
   m_Layer: 5
-  m_Name: Ddown_DifficultyLevel
+  m_Name: TMPDD_DifficultyLevel
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
