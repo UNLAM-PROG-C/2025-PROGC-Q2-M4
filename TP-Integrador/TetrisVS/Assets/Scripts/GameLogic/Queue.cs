@@ -5,7 +5,7 @@ using UnityEngine.Tilemaps;
 using System.Collections.Generic;
 
 public class ShapesQueue {
-    private Queue<int> Shapes = new Queue<int>();
+    private static Queue<int> Shapes = new Queue<int>();
 
     public ShapesQueue()
     {
@@ -22,6 +22,11 @@ public class ShapesQueue {
         setShape();
 
         return nextShape;
+    }
+
+    public int peekShape(int position)
+    {
+        return Shapes.ElementAt(position);
     }
 
     private void setShape()
