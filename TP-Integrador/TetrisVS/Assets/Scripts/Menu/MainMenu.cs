@@ -26,4 +26,10 @@ public class MainMenu : MonoBehaviour
         SceneManager.LoadScene(2);
     }
 
+    public static void LoadMainMenu()
+    {
+        // Assuming the main menu is in scene index 0
+        SceneManager.LoadScene(0);
+    }
+
 }

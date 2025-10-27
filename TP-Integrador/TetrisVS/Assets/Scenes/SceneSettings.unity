@@ -407,7 +407,6 @@ GameObject:
   - component: {fileID: 276946414}
   - component: {fileID: 276946413}
   - component: {fileID: 276946412}
-  - component: {fileID: 276946411}
   m_Layer: 5
   m_Name: btn_Exit
   m_TagString: Untagged
@@ -435,18 +434,6 @@ RectTransform:
   m_AnchoredPosition: {x: 2.27e-13, y: -110}
   m_SizeDelta: {x: 160, y: 30}
   m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &276946411
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 276946409}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5d9ab93f584e18b4292fac003ad9df5c, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::MainMenu
 --- !u!114 &276946412
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -491,9 +478,9 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 276946411}
+      - m_Target: {fileID: 577275115}
         m_TargetAssemblyTypeName: MainMenu, Assembly-CSharp
-        m_MethodName: LoadSettingsMenu
+        m_MethodName: LoadMainMenu
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -936,6 +923,7 @@ GameObject:
   - component: {fileID: 577275111}
   - component: {fileID: 577275110}
   - component: {fileID: 577275114}
+  - component: {fileID: 577275115}
   m_Layer: 5
   m_Name: Canvas
   m_TagString: Untagged
@@ -1046,6 +1034,18 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Settings
   MixerMusicEffects: {fileID: 24100000, guid: 094cc262108e40f4db7582090ec88b8b, type: 2}
   MixerSoundEffects: {fileID: 24100000, guid: 890e42074664a8e48a35788f010615a3, type: 2}
+--- !u!114 &577275115
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 577275109}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5d9ab93f584e18b4292fac003ad9df5c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MainMenu
 --- !u!1 &759586451
 GameObject:
   m_ObjectHideFlags: 0
@@ -1288,7 +1288,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: 2
+  m_Text: 1
 --- !u!222 &781599049
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -2820,7 +2820,7 @@ MonoBehaviour:
   m_CaptionImage: {fileID: 0}
   m_ItemText: {fileID: 1940978924}
   m_ItemImage: {fileID: 0}
-  m_Value: 1
+  m_Value: 0
   m_Options:
     m_Options:
     - m_Text: 1
@@ -2842,6 +2842,16 @@ MonoBehaviour:
     - m_Text: 9
       m_Image: {fileID: 0}
     - m_Text: 10
+      m_Image: {fileID: 0}
+    - m_Text: 11
+      m_Image: {fileID: 0}
+    - m_Text: 12
+      m_Image: {fileID: 0}
+    - m_Text: 13
+      m_Image: {fileID: 0}
+    - m_Text: 14
+      m_Image: {fileID: 0}
+    - m_Text: 15
       m_Image: {fileID: 0}
   m_OnValueChanged:
     m_PersistentCalls:
