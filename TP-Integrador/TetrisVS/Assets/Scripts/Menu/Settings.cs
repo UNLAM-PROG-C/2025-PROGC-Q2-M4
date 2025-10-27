@@ -26,4 +26,17 @@ public class Settings : MonoBehaviour
         #endif
     }
 
+    public void SetDifficultyLevel(int level)
+    {
+        DifficultyLevel = level+1;
+        #if UNITY_EDITOR
+                    Debug.Log("Difficulty level set to: " + DifficultyLevel);
+        #endif
+    }
+
+    void Awake()
+    {
+        DontDestroyOnLoad(this.gameObject);
+    }
+
 }

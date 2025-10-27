@@ -7,8 +7,8 @@ public class Piece : MonoBehaviour
     public Vector3Int position { get; private set; } //this is used for tilemaps, tilemaps use Vector3Ints instead of Vector2Ints
     public Vector3Int[] cells { get; private set; } //variable to handle piece rotations
     public int rotationIndex { get; private set; } //variable to handle piece rotations
-    public float stepDelay = 1f; //time delay for piece to move down automatically
-    public float lockDelay = 0.5f; //time delay before piece locks in place after reaching the bottom
+    public float stepDelay = 1f / Settings.DifficultyLevel; //time delay for piece to move down automatically
+    public float lockDelay = 0.5f / Settings.DifficultyLevel; //time delay before piece locks in place after reaching the bottom
 
     private float stepTime;
     private float lockTime;
