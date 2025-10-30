@@ -1,0 +1,78 @@
+using System;
+using System.IO;
+using System.Net.Sockets;
+using System.Threading;
+using UnityEngine;
+
+public class TcpClientPeer
+{
+    public string Host { get; }
+    public int Port { get; }
+    private TcpClient _client;
+    private Thread _recvThread;
+    private StreamReader _reader;
+    private StreamWriter _writer;
+    private volatile bool _connected;
+
+    public event Action<string> OnRawMessage;
+    public event Action OnDisconnected;
+
+    public TcpClientPeer(string host, int port)
+    {
+        Host = host;
+        Port = port;
+    }
+
+    public void Connect()
+    {
+        if (_connected) return;
+        _client = new TcpClient();
+        _client.NoDelay = true;
+        _client.Connect(Host, Port);
+        var ns = _client.GetStream();
+        _reader = new StreamReader(ns);
+        _writer = new StreamWriter(ns) { AutoFlush = true };
+        _connected = true;
+
+        _recvThread = new Thread(ReceiveLoop) { IsBackground = true };
+        _recvThread.Start();
+
+        Send(NetMessageFactory.Wrap("handshake", new HandshakeMessage { role = "client" }));
+        Debug.Log("[Client] Connected to " + Host + ":" + Port);
+    }
+
+    private void ReceiveLoop()
+    {
+        try
+        {
+            while (_connected)
+            {
+                var line = _reader.ReadLine();
+                if (line == null) break;
+                OnRawMessage?.Invoke(line);
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.LogWarning("[Client] Receive exception: " + ex.Message);
+        }
+        finally
+        {
+            _connected = false;
+            OnDisconnected?.Invoke();
+        }
+    }
+
+    public void Send(string data)
+    {
+        try { _writer.Write(data); }
+        catch (Exception ex) { Debug.LogWarning("[Client] Send exception: " + ex.Message); }
+    }
+
+    public void Disconnect()
+    {
+        _connected = false;
+        try { _client.Close(); } catch { }
+        Debug.Log("[Client] Disconnected");
+    }
+}

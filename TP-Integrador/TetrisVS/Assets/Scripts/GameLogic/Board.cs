@@ -9,6 +9,7 @@ public class Board : MonoBehaviour
     public Vector3Int spawnPos;
     public Vector2Int boardBoundsSize = new Vector2Int(10, 20);
     public ShapesQueue shapesQueue = new ShapesQueue();
+    public MultiplayerManager multiplayerManager;
 
     public RectInt Bounds
     {

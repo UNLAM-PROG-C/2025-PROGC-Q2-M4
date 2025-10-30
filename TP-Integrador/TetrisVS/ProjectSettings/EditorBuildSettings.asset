@@ -6,14 +6,20 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
-    path: Assets/Scenes/SceneMenuScreen.unity
+    path: Assets/Scenes/Menu/SceneMainMenuScreen.unity
     guid: 6f9454792bee28147add7dba78f55124
   - enabled: 1
-    path: Assets/Scenes/SceneTetris.unity
+    path: Assets/Scenes/Game/SceneSinglePlayerTetris.unity
     guid: 9f818be83cbf06846aa6abba14aeb512
   - enabled: 1
-    path: Assets/Scenes/SceneSettings.unity
+    path: Assets/Scenes/Menu/SceneSettings.unity
     guid: 724db049665d39d43a0ec9585fdfce32
+  - enabled: 1
+    path: Assets/Scenes/Menu/SceneMultiplayerMenu.unity
+    guid: 8d302e34d243d374e8338141a0750d72
+  - enabled: 1
+    path: Assets/Scenes/Game/SceneMultiplayerTetris.unity
+    guid: da087f7eb3fa7964691cbdd7c42102b3
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 2bcd2660ca9b64942af0de543d8d7100, type: 3}
   m_UseUCBPForAssetBundles: 0

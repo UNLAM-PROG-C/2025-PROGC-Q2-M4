@@ -32,4 +32,16 @@ public class MainMenu : MonoBehaviour
         SceneManager.LoadScene(0);
     }
 
+    public static void LoadMultiplayerMenu()
+    {
+        // Assuming the multiplayer menu is in scene index 3
+        SceneManager.LoadScene(3);
+    }
+
+    public static void LoadMultiplayerGame()
+    {
+        // Assuming the multiplayer game is in scene index 4
+        SceneManager.LoadScene(4);
+    }
+
 }
