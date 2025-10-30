@@ -12,15 +12,17 @@ public class RemoteBoardView : MonoBehaviour
         if (tilemap == null)
             tilemap = GetComponentInChildren<Tilemap>() ?? gameObject.AddComponent<Tilemap>();
 
-        for (int i = 0; i < TetrisBlocks.Length; i++)
-            TetrisBlocks[i].Initialize();
+        if (TetrisBlocks != null)
+            for (int i = 0; i < TetrisBlocks.Length; i++)
+                TetrisBlocks[i].Initialize();
     }
 
     public void ApplyBoardState(BoardStateMessage state)
     {
-        if (tilemap == null) return;
+        if (tilemap == null || TetrisBlocks == null || TetrisBlocks.Length == 0) return;
         tilemap.ClearAllTiles();
 
+        // Locked
         for (int i = 0; i < state.lockedCount; i++)
         {
             int shapeIdx = state.lockedShapeIndex[i];
@@ -31,8 +33,8 @@ public class RemoteBoardView : MonoBehaviour
             }
         }
 
-        if (drawActivePiece && state.hasActive &&
-            state.activeShapeIndex >= 0 && state.activeShapeIndex < TetrisBlocks.Length)
+        // Active
+        if (drawActivePiece && state.hasActive && state.activeShapeIndex >= 0 && state.activeShapeIndex < TetrisBlocks.Length)
         {
             var shapeData = TetrisBlocks[state.activeShapeIndex];
             for (int i = 0; i < state.activeCellOffsetX.Length; i++)

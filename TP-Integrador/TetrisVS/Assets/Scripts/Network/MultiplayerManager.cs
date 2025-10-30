@@ -7,12 +7,10 @@ public class MultiplayerManager : MonoBehaviour
 {
     public static MultiplayerManager Instance { get; private set; }
 
-    [Header("Network Settings")]
     public int defaultPort = 7777;
     public float sendInterval = 0.25f;
     public bool autoImmediateSnapshotOnConnect = true;
 
-    [Header("Debug")]
     [SerializeField] private MultiplayerRole currentRole = MultiplayerRole.None;
     [SerializeField] private string lastMessage;
 
@@ -34,7 +32,7 @@ public class MultiplayerManager : MonoBehaviour
         Instance = this;
         DontDestroyOnLoad(gameObject);
         Application.runInBackground = true;
-        Debug.Log("[MultiplayerManager] Awake.");
+        Debug.Log("[MultiplayerManager] Awake");
     }
 
     private void Update()
@@ -65,14 +63,14 @@ public class MultiplayerManager : MonoBehaviour
     {
         if (currentRole != MultiplayerRole.None)
         {
-            Debug.LogWarning("[MultiplayerManager] Ya hay un rol activo."); return;
+            Debug.LogWarning("[MultiplayerManager] Ya hay rol."); return;
         }
         currentRole = MultiplayerRole.Host;
         _server = new TcpServer(defaultPort);
         _server.OnRawMessage += HandleIncomingServerSide;
-        _server.OnClientConnected += conn =>
+        _server.OnClientConnected += _ =>
         {
-            Debug.Log("[Server] Cliente conectado, envío snapshot inmediato.");
+            Debug.Log("[Server] Cliente conectado -> snapshot inmediato host.");
             ForceImmediateSend();
         };
         _server.Start();
@@ -83,7 +81,7 @@ public class MultiplayerManager : MonoBehaviour
     {
         if (currentRole != MultiplayerRole.None)
         {
-            Debug.LogWarning("[MultiplayerManager] Ya hay un rol activo."); return;
+            Debug.LogWarning("[MultiplayerManager] Ya hay rol."); return;
         }
         currentRole = MultiplayerRole.Client;
         _client = new TcpClientPeer(ip, defaultPort);
@@ -92,14 +90,13 @@ public class MultiplayerManager : MonoBehaviour
         {
             ThreadDispatcher.Instance.Enqueue(() =>
             {
-                Debug.LogWarning("[MultiplayerManager] Desconectado del host.");
+                Debug.LogWarning("[MultiplayerManager] Desconectado.");
                 currentRole = MultiplayerRole.None;
             });
         };
         _client.Connect();
         Debug.Log("[MultiplayerManager] Intentando conectar a " + ip);
-        if (autoImmediateSnapshotOnConnect)
-            ForceImmediateSend();
+        if (autoImmediateSnapshotOnConnect) ForceImmediateSend();
     }
 
     public void ForceImmediateSend()
@@ -122,14 +119,8 @@ public class MultiplayerManager : MonoBehaviour
         state.owner = IsServer ? "host" : "client";
         string msg = NetMessageFactory.Wrap("board_state", state);
 
-        if (IsServer)
-        {
-            _server?.Broadcast(msg);
-        }
-        else if (IsClient)
-        {
-            _client?.Send(msg);
-        }
+        if (IsServer) _server?.Broadcast(msg);
+        else if (IsClient) _client?.Send(msg);
     }
 
     private void HandleIncomingServerSide(string raw)

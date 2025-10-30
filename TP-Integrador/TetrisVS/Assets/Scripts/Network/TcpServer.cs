@@ -12,13 +12,13 @@ public class TcpServer
     private TcpListener _listener;
     private Thread _acceptThread;
     private volatile bool _running;
-    private readonly List<ClientConnection> _clients = new List<ClientConnection>();
+    private readonly List<ClientConnection> _clients = new();
 
     public event Action<string> OnRawMessage;
     public event Action<ClientConnection> OnClientConnected;
     public event Action<ClientConnection> OnClientDisconnected;
 
-    public TcpServer(int port) { Port = port; }
+    public TcpServer(int port) => Port = port;
 
     public void Start()
     {
@@ -54,7 +54,6 @@ public class TcpServer
                         lock (_clients) _clients.Remove(conn);
                         OnClientDisconnected?.Invoke(conn);
                     });
-                // Handshake lo envía el cliente primero; podemos enviar uno también si queremos.
             }
         }
         catch (Exception ex)
@@ -63,15 +62,13 @@ public class TcpServer
         }
     }
 
-    public void Broadcast(string message)
+    public void Broadcast(string msg)
     {
         lock (_clients)
         {
-            foreach (var c in _clients) c.Send(message);
+            foreach (var c in _clients) c.Send(msg);
         }
     }
-
-    public void SendTo(ClientConnection c, string message) => c.Send(message);
 
     public void Stop()
     {
@@ -89,7 +86,7 @@ public class TcpServer
 public class ClientConnection
 {
     private readonly TcpClient _client;
-    private Thread _receiveThread;
+    private Thread _recvThread;
     private volatile bool _open;
     private StreamReader _reader;
     private StreamWriter _writer;
@@ -106,7 +103,7 @@ public class ClientConnection
 
     public void StartReceiving(Action<string> onLine, Action onClosed)
     {
-        _receiveThread = new Thread(() =>
+        _recvThread = new Thread(() =>
         {
             try
             {
@@ -128,7 +125,7 @@ public class ClientConnection
             }
         })
         { IsBackground = true };
-        _receiveThread.Start();
+        _recvThread.Start();
     }
 
     public void Send(string data)

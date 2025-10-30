@@ -7,6 +7,7 @@ public class BoardMultiplayerAdapter : MonoBehaviour
 {
     public Board board;
     public int queuePreviewCount = 5;
+
     private Tilemap _tilemap;
     private Dictionary<Tile, int> _tileToShapeIndex;
 
@@ -35,14 +36,14 @@ public class BoardMultiplayerAdapter : MonoBehaviour
 
     public BoardStateMessage CaptureBoardState()
     {
-        var bounds = board.Bounds;
+        var b = board.Bounds;
         var lockedX = new List<int>();
         var lockedY = new List<int>();
-        var lockedShapeIndex = new List<int>();
+        var lockedShapeIdx = new List<int>();
 
-        for (int y = bounds.yMin; y < bounds.yMax; y++)
+        for (int y = b.yMin; y < b.yMax; y++)
         {
-            for (int x = bounds.xMin; x < bounds.xMax; x++)
+            for (int x = b.xMin; x < b.xMax; x++)
             {
                 var pos = new Vector3Int(x, y, 0);
                 if (_tilemap.HasTile(pos))
@@ -53,25 +54,24 @@ public class BoardMultiplayerAdapter : MonoBehaviour
                         shapeIdx = idx;
                     lockedX.Add(x);
                     lockedY.Add(y);
-                    lockedShapeIndex.Add(shapeIdx);
+                    lockedShapeIdx.Add(shapeIdx);
                 }
             }
         }
 
         bool hasActive = board.activePiece != null && board.activePiece.cells != null;
-        int[] offsetX = new int[hasActive ? board.activePiece.cells.Length : 0];
-        int[] offsetY = new int[hasActive ? board.activePiece.cells.Length : 0];
+        int[] offX = new int[hasActive ? board.activePiece.cells.Length : 0];
+        int[] offY = new int[hasActive ? board.activePiece.cells.Length : 0];
         int activeShapeIndex = -1;
-
         if (hasActive)
         {
             for (int i = 0; i < board.activePiece.cells.Length; i++)
             {
-                offsetX[i] = board.activePiece.cells[i].x;
-                offsetY[i] = board.activePiece.cells[i].y;
+                offX[i] = board.activePiece.cells[i].x;
+                offY[i] = board.activePiece.cells[i].y;
             }
-            var tile = board.activePiece.TBSData.tile;
-            if (tile != null && _tileToShapeIndex.TryGetValue(tile, out var idx))
+            var t = board.activePiece.TBSData.tile;
+            if (t != null && _tileToShapeIndex.TryGetValue(t, out var idx))
                 activeShapeIndex = idx;
         }
 
@@ -82,18 +82,18 @@ public class BoardMultiplayerAdapter : MonoBehaviour
 
         return new BoardStateMessage
         {
-            width = bounds.width,
-            height = bounds.height,
+            width = b.width,
+            height = b.height,
             lockedCount = lockedX.Count,
             lockedX = lockedX.ToArray(),
             lockedY = lockedY.ToArray(),
-            lockedShapeIndex = lockedShapeIndex.ToArray(),
+            lockedShapeIndex = lockedShapeIdx.ToArray(),
             hasActive = hasActive,
             activeShapeIndex = activeShapeIndex,
             activePosX = hasActive ? board.activePiece.position.x : 0,
             activePosY = hasActive ? board.activePiece.position.y : 0,
-            activeCellOffsetX = offsetX,
-            activeCellOffsetY = offsetY,
+            activeCellOffsetX = offX,
+            activeCellOffsetY = offY,
             queueLength = qLen,
             upcomingShapes = upcoming,
             gameOver = false

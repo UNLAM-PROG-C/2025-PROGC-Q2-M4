@@ -19,16 +19,16 @@ public class ThreadDispatcher : MonoBehaviour
         }
     }
 
-    private readonly ConcurrentQueue<Action> _queue = new ConcurrentQueue<Action>();
+    private readonly ConcurrentQueue<Action> _q = new ConcurrentQueue<Action>();
 
-    public void Enqueue(Action action)
+    public void Enqueue(Action a)
     {
-        if (action != null) _queue.Enqueue(action);
+        if (a != null) _q.Enqueue(a);
     }
 
     private void Update()
     {
-        while (_queue.TryDequeue(out var act))
+        while (_q.TryDequeue(out var act))
         {
             try { act(); } catch (Exception ex) { Debug.LogError(ex); }
         }

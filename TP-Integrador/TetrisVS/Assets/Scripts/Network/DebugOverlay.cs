@@ -9,7 +9,9 @@ public class DebugOverlay : MonoBehaviour
         if (MultiplayerManager.Instance == null) return;
         string role = MultiplayerManager.Instance.IsServer ? "HOST" :
                       MultiplayerManager.Instance.IsClient ? "CLIENT" : "NONE";
+        GUILayout.BeginArea(new Rect(10, 10, 220, 80), GUI.skin.box);
         GUILayout.Label($"Role: {role}");
-        GUILayout.Label($"Last remote update: {LastRemoteUpdateTime:F2}s TimeNow:{Time.time:F2}");
+        GUILayout.Label($"Last remote update: {LastRemoteUpdateTime:F2}");
+        GUILayout.EndArea();
     }
 }

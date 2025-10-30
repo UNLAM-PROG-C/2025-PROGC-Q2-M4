@@ -1,22 +1,9 @@
 using System;
 using UnityEngine;
 
-[Serializable]
-public class NetworkEnvelope
-{
-    public string type;
-    public string payload;
-}
-
-[Serializable]
-public class HandshakeMessage
-{
-    public string role;
-    public string version = "tetris_vs_v1";
-}
-
-[Serializable]
-public class BoardStateMessage
+[Serializable] public class NetworkEnvelope { public string type; public string payload; }
+[Serializable] public class HandshakeMessage { public string role; public string version = "tetris_vs_v1"; }
+[Serializable] public class BoardStateMessage
 {
     public string owner;
     public int width;
@@ -43,15 +30,10 @@ public static class NetMessageFactory
         var env = new NetworkEnvelope { type = type, payload = JsonUtility.ToJson(obj) };
         return JsonUtility.ToJson(env) + "\n";
     }
-
     public static bool TryUnwrap(string raw, out NetworkEnvelope env)
     {
         env = null;
-        try
-        {
-            env = JsonUtility.FromJson<NetworkEnvelope>(raw);
-            return env != null;
-        }
+        try { env = JsonUtility.FromJson<NetworkEnvelope>(raw); return env != null; }
         catch { return false; }
     }
 }

@@ -26,17 +26,17 @@ public class TcpClientPeer
     public void Connect()
     {
         if (_connected) return;
-        _client = new TcpClient();
-        _client.NoDelay = true;
+        _client = new TcpClient { NoDelay = true };
         try
         {
             _client.Connect(Host, Port);
         }
         catch (Exception ex)
         {
-            Debug.LogError($"[Client] Connect failed to {Host}:{Port} - {ex.Message}");
+            Debug.LogError($"[Client] Connect failed {Host}:{Port} - {ex.Message}");
             return;
         }
+
         var ns = _client.GetStream();
         _reader = new StreamReader(ns);
         _writer = new StreamWriter(ns) { AutoFlush = true };
@@ -74,7 +74,10 @@ public class TcpClientPeer
     public void Send(string data)
     {
         try { _writer.Write(data); }
-        catch (Exception ex) { Debug.LogWarning("[Client] Send exception: " + ex.Message); }
+        catch (Exception ex)
+        {
+            Debug.LogWarning("[Client] Send exception: " + ex.Message);
+        }
     }
 
     public void Disconnect()
