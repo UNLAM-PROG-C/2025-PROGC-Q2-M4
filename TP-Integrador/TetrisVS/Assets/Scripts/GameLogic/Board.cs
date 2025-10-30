@@ -95,9 +95,6 @@ public class Board : MonoBehaviour
             }
 
         }
-
-
-
         return true;
     }
 

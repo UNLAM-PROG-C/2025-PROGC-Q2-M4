@@ -176,4 +176,21 @@ public class MultiplayerManager : MonoBehaviour
         if (_server != null) _server.Stop();
         if (_client != null) _client.Disconnect();
     }
+
+    public void LeaveGame()
+    {
+        if (IsServer)
+        {
+            _server?.Stop();
+            _server = null;
+        }
+        else if (IsClient)
+        {
+            _client?.Disconnect();
+            _client = null;
+        }
+        currentRole = MultiplayerRole.None;
+        Debug.Log("[MultiplayerManager] Juego abandonado.");
+    }
+
 }
