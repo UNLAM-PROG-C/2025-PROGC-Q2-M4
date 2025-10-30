@@ -24,6 +24,7 @@ public class Piece : MonoBehaviour
             cells = new Vector3Int[4];
         }
 
+        rotationIndex = 0;
 
         stepDelay = stepDelay / (PlayerPrefs.GetInt("DifficultyLevel", 2) - 1);
         lockDelay = lockDelay / (PlayerPrefs.GetInt("DifficultyLevel", 2) - 1);
@@ -42,6 +43,7 @@ public class Piece : MonoBehaviour
 
         stepTime = Time.time + stepDelay;
         lockTime = 0f;
+        rotationIndex = 0;
     }
 
     void Update()
@@ -66,7 +68,7 @@ public class Piece : MonoBehaviour
         }
         else if (Input.GetKeyDown(KeyCode.UpArrow))
         {
-            // Rotation logic would go here
+            //used to be a cheat button XD
         }
         else if (Input.GetKeyDown(KeyCode.Space))
         {
@@ -79,11 +81,11 @@ public class Piece : MonoBehaviour
         }
         else if (Input.GetKeyDown(KeyCode.Q))
         {
-            RotatePiece(1);
+            RotatePiece(1);      // Clockwise
         }
         else if (Input.GetKeyDown(KeyCode.E))
         {
-            RotatePiece(-1);
+            RotatePiece(-1);     // Counter-Clockwise
         }
     }
 
@@ -139,7 +141,6 @@ public class Piece : MonoBehaviour
         board.SpawnPiece();
     }
 
-    // Network application method used by BoardMultiplayerAdapter for client sync.
     public void ApplyNetworkState(Vector3Int newPos, Vector3Int[] newCells, TetrisBlockShapeData shapeData)
     {
         position = newPos;
@@ -150,66 +151,86 @@ public class Piece : MonoBehaviour
         }
     }
 
-
     public void RotatePiece(int direction)
     {
-        int originalRotation = this.rotationIndex;
-        Vector3Int[] originalCells = (Vector3Int[])this.cells.Clone();
-
-        this.rotationIndex = Wrap(this.rotationIndex + direction, 0, 4);
-        ApplyRotationMatrix(direction);
-
-        if (!this.board.IsValidPosition(this, this.position))
+        // O-piece (square) does not rotate in SRS; treat as no-op.
+        if (TBSData.Shape == eTetrisBlockShapes.O)
         {
-            // wall kicks
-            Vector2Int[,] wallKicks = Data.WallKicks[this.TBSData.Shape];
+            return;
+        }
+
+        board.Clear(this);
+
+        int originalRotation = rotationIndex;
+        Vector3Int[] originalCells = (Vector3Int[])cells.Clone();
+        Vector3Int originalPosition = position;
+
+        rotationIndex = Wrap(rotationIndex + direction, 0, 4);
+        RotateCells(direction);
+
+        bool rotationSucceeded = true;
+
+        if (!board.IsValidPosition(this, position))
+        {
+            rotationSucceeded = false;
+
+            // Wall kicks according to SRS arrays
+            Vector2Int[,] wallKicks = Data.WallKicks[TBSData.Shape];
+            // For each set of kicks we choose the correct row pair: originalRotation and direction.
+            int kickIndexBase = originalRotation * 2 + (direction > 0 ? 0 : 1);
+
             for (int i = 0; i < wallKicks.GetLength(1); i++)
             {
-                Vector2Int translation = wallKicks[originalRotation * 2 + (direction > 0 ? 0 : 1), i];
-                Vector3Int testPosition = this.position + new Vector3Int(translation.x, translation.y, 0);
+                Vector2Int translation = wallKicks[kickIndexBase, i];
+                position = originalPosition + new Vector3Int(translation.x, translation.y, 0);
 
-                if (this.board.IsValidPosition(this, testPosition))
+                if (board.IsValidPosition(this, position))
                 {
-                    this.position = testPosition;
-                    return;
+                    rotationSucceeded = true;
+                    break;
                 }
             }
-            this.rotationIndex = originalRotation;
-            this.cells = originalCells;
         }
+
+        if (!rotationSucceeded)
+        {
+            // Revert
+            rotationIndex = originalRotation;
+            cells = originalCells;
+            position = originalPosition;
+        }
+        else
+        {
+            // Successful rotation resets lock timer to give player time.
+            lockTime = 0f;
+        }
+
+        board.Set(this);
+        board.multiplayerManager?.ForceImmediateSend();
     }
 
-    private void ApplyRotationMatrix(int direction)
+    private void RotateCells(int direction)
     {
-        float cos = Data.RotationMatrix[0];
-        float sin = Data.RotationMatrix[1];
-        if (direction < 0)
+        // Integer 90° rotations:
+        // CW: (x,y) -> ( y, -x )
+        // CCW: (x,y) -> (-y,  x )
+        for (int i = 0; i < cells.Length; i++)
         {
-            sin = -sin;
+            Vector3Int c = cells[i];
+            Vector3Int rotated = direction > 0
+                ? new Vector3Int(c.y, -c.x, 0)
+                : new Vector3Int(-c.y, c.x, 0);
+            cells[i] = rotated;
         }
-        for (int i = 0; i < this.cells.Length; i++)
-        {
-            Vector3Int cell = this.cells[i];
-            int x = Mathf.RoundToInt(cos * cell.x - sin * cell.y);
-            int y = Mathf.RoundToInt(sin * cell.x + cos * cell.y);
-            this.cells[i] = new Vector3Int(x, y, 0);
-        }
-
-
     }
 
     private int Wrap(int input, int min, int max)
     {
-        if (input < min)
-        {
-            return max - (min - input) % (max - min);
-        }
-        else
-        {
-            return input;
-        }
+        // Proper modulo wrap: ensures result in [min, max)
+        int range = max - min;
+        if (range <= 0) return min;
+        int value = (input - min) % range;
+        if (value < 0) value += range;
+        return min + value;
     }
-
-
-
 }
