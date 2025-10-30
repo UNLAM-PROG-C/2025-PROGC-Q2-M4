@@ -42,10 +42,6 @@ public class Piece : MonoBehaviour
 
     void Update()
     {
-        // Prevent client-side piece control in multiplayer (host authoritative).
-        if (MultiplayerManager.Instance != null && MultiplayerManager.Instance.IsClient)
-            return;
-
         HandleInputLocal();
         HandleGravity();
     }

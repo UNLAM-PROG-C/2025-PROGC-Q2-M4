@@ -1,12 +1,7 @@
 using System;
 using UnityEngine;
 
-public enum MultiplayerRole
-{
-    None,
-    Host,
-    Client
-}
+public enum MultiplayerRole { None, Host, Client }
 
 public class MultiplayerManager : MonoBehaviour
 {
@@ -14,19 +9,18 @@ public class MultiplayerManager : MonoBehaviour
 
     [Header("Network Settings")]
     public int defaultPort = 7777;
-    public float broadcastInterval = 0.2f;
+    public float sendInterval = 0.25f;
+    public bool autoImmediateSnapshotOnConnect = true;
 
-    [Header("Runtime")]
+    [Header("Debug")]
     [SerializeField] private MultiplayerRole currentRole = MultiplayerRole.None;
     [SerializeField] private string lastMessage;
 
-    // Optional player identifier (not strictly needed for host-only control)
-    public string playerId = Guid.NewGuid().ToString();
-
+    private float _sendTimer;
     private TcpServer _server;
     private TcpClientPeer _client;
-    private float _broadcastTimer;
-    private BoardMultiplayerAdapter _boardAdapter;
+    private BoardMultiplayerAdapter _localAdapter;
+    private RemoteBoardView _remoteView;
 
     public bool IsServer => currentRole == MultiplayerRole.Host;
     public bool IsClient => currentRole == MultiplayerRole.Client;
@@ -35,141 +29,155 @@ public class MultiplayerManager : MonoBehaviour
     {
         if (Instance != null && Instance != this)
         {
-            Destroy(gameObject);
-            return;
+            Destroy(gameObject); return;
         }
         Instance = this;
         DontDestroyOnLoad(gameObject);
+        Application.runInBackground = true;
+        Debug.Log("[MultiplayerManager] Awake.");
     }
 
     private void Update()
     {
-        if (IsServer)
+        if (currentRole == MultiplayerRole.None) return;
+        _sendTimer += Time.deltaTime;
+        if (_sendTimer >= sendInterval)
         {
-            _broadcastTimer += Time.deltaTime;
+            _sendTimer = 0f;
+            SendLocalBoardState();
         }
     }
 
-    public bool ShouldBroadcastThisFrame()
+    public void RegisterLocalAdapter(BoardMultiplayerAdapter adapter)
     {
-        if (!IsServer) return false;
-        if (_broadcastTimer >= broadcastInterval)
-        {
-            _broadcastTimer = 0f;
-            return true;
-        }
-        return false;
+        _localAdapter = adapter;
+        Debug.Log("[MultiplayerManager] LocalAdapter registrado.");
     }
+    public void RegisterBoardAdapter(BoardMultiplayerAdapter adapter) => RegisterLocalAdapter(adapter);
 
-    public void RegisterBoardAdapter(BoardMultiplayerAdapter adapter)
+    public void RegisterRemoteView(RemoteBoardView view)
     {
-        _boardAdapter = adapter;
+        _remoteView = view;
+        Debug.Log("[MultiplayerManager] RemoteView registrada.");
     }
 
     public void HostGame()
     {
-        if (currentRole != MultiplayerRole.None) return;
-
+        if (currentRole != MultiplayerRole.None)
+        {
+            Debug.LogWarning("[MultiplayerManager] Ya hay un rol activo."); return;
+        }
         currentRole = MultiplayerRole.Host;
         _server = new TcpServer(defaultPort);
-        _server.OnRawMessage += HandleIncomingMessageServer;
+        _server.OnRawMessage += HandleIncomingServerSide;
         _server.OnClientConnected += conn =>
         {
-            if (_boardAdapter != null)
-            {
-                var state = _boardAdapter.CaptureBoardState();
-                string msg = NetMessageFactory.Wrap("board_state", state);
-                _server.SendTo(conn, msg);
-            }
+            Debug.Log("[Server] Cliente conectado, envío snapshot inmediato.");
+            ForceImmediateSend();
         };
         _server.Start();
-        Debug.Log("[MultiplayerManager] Hosting game...");
+        Debug.Log("[MultiplayerManager] Host iniciado.");
     }
 
     public void JoinGame(string ip)
     {
-        if (currentRole != MultiplayerRole.None) return;
-
+        if (currentRole != MultiplayerRole.None)
+        {
+            Debug.LogWarning("[MultiplayerManager] Ya hay un rol activo."); return;
+        }
         currentRole = MultiplayerRole.Client;
         _client = new TcpClientPeer(ip, defaultPort);
-        _client.OnRawMessage += HandleIncomingMessageClient;
+        _client.OnRawMessage += HandleIncomingClientSide;
         _client.OnDisconnected += () =>
         {
             ThreadDispatcher.Instance.Enqueue(() =>
             {
-                Debug.LogWarning("[MultiplayerManager] Lost connection to server.");
+                Debug.LogWarning("[MultiplayerManager] Desconectado del host.");
                 currentRole = MultiplayerRole.None;
             });
         };
         _client.Connect();
-        Debug.Log("[MultiplayerManager] Joined game at " + ip);
+        Debug.Log("[MultiplayerManager] Intentando conectar a " + ip);
+        if (autoImmediateSnapshotOnConnect)
+            ForceImmediateSend();
     }
 
-    public void BroadcastBoardState(BoardStateMessage state)
+    public void ForceImmediateSend()
     {
-        if (!IsServer || _server == null) return;
-        string msg = NetMessageFactory.Wrap("board_state", state);
-        _server.Broadcast(msg);
+        _sendTimer = sendInterval;
+        SendLocalBoardState();
     }
 
-    // OPTIONAL: If you want to keep RequestMove calls, implement a simple host-only passthrough.
-    public void RequestMove(string action)
+    private void SendLocalBoardState()
     {
-        // In host authoritative mode, this is a no-op for clients.
-        if (IsClient)
+        if (_localAdapter == null)
         {
-            Debug.LogWarning("Client RequestMove ignored in host-only mode.");
-            return;
+            _localAdapter = FindObjectOfType<BoardMultiplayerAdapter>();
+            if (_localAdapter != null)
+                Debug.Log("[MultiplayerManager] LocalAdapter encontrado tardíamente.");
         }
-        // Could trigger piece movement here if you pass more detailed info.
+        if (_localAdapter == null) return;
+
+        var state = _localAdapter.CaptureBoardState();
+        state.owner = IsServer ? "host" : "client";
+        string msg = NetMessageFactory.Wrap("board_state", state);
+
+        if (IsServer)
+        {
+            _server?.Broadcast(msg);
+        }
+        else if (IsClient)
+        {
+            _client?.Send(msg);
+        }
     }
 
-    private void HandleIncomingMessageServer(string raw)
+    private void HandleIncomingServerSide(string raw)
     {
         ThreadDispatcher.Instance.Enqueue(() =>
         {
             lastMessage = raw;
             if (!NetMessageFactory.TryUnwrap(raw, out var env)) return;
-
-            switch (env.type)
+            if (env.type == "board_state")
             {
-                case "handshake":
-                    break;
-                case "input_request":
-                    // Future: process client input
-                    break;
-                default:
-                    Debug.Log("[Server] Unknown message type: " + env.type);
-                    break;
+                var state = JsonUtility.FromJson<BoardStateMessage>(env.payload);
+                if (state.owner == "client")
+                {
+                    EnsureRemoteView();
+                    _remoteView?.ApplyBoardState(state);
+                    DebugOverlay.LastRemoteUpdateTime = Time.time;
+                }
             }
         });
     }
 
-    private void HandleIncomingMessageClient(string raw)
+    private void HandleIncomingClientSide(string raw)
     {
         ThreadDispatcher.Instance.Enqueue(() =>
         {
             lastMessage = raw;
             if (!NetMessageFactory.TryUnwrap(raw, out var env)) return;
-
-            switch (env.type)
+            if (env.type == "board_state")
             {
-                case "board_state":
-                    var state = JsonUtility.FromJson<BoardStateMessage>(env.payload);
-                    if (_boardAdapter == null)
-                    {
-                        _boardAdapter = FindObjectOfType<BoardMultiplayerAdapter>();
-                        if (_boardAdapter != null) RegisterBoardAdapter(_boardAdapter);
-                    }
-                    _boardAdapter?.ApplyBoardState(state);
-                    break;
-                case "handshake":
-                    break;
-                default:
-                    Debug.Log("[Client] Unknown message type: " + env.type);
-                    break;
+                var state = JsonUtility.FromJson<BoardStateMessage>(env.payload);
+                if (state.owner == "host")
+                {
+                    EnsureRemoteView();
+                    _remoteView?.ApplyBoardState(state);
+                    DebugOverlay.LastRemoteUpdateTime = Time.time;
+                }
             }
         });
+    }
+
+    private void EnsureRemoteView()
+    {
+        if (_remoteView == null)
+        {
+            _remoteView = FindObjectOfType<RemoteBoardView>();
+            if (_remoteView != null)
+                Debug.Log("[MultiplayerManager] RemoteView encontrado tardíamente.");
+        }
     }
 
     private void OnDestroy()

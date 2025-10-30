@@ -11,46 +11,36 @@ public class NetworkEnvelope
 [Serializable]
 public class HandshakeMessage
 {
-    public string role; // "server" or "client"
-    public string version = "tetris_v1";
+    public string role;
+    public string version = "tetris_vs_v1";
 }
 
 [Serializable]
 public class BoardStateMessage
 {
+    public string owner;
     public int width;
     public int height;
-
-    // Locked tiles: parallel arrays to minimize allocations
     public int lockedCount;
     public int[] lockedX;
     public int[] lockedY;
-    public int[] lockedShapeIndex; // index into TetrisBlocks array
-
-    // Active piece
+    public int[] lockedShapeIndex;
     public bool hasActive;
     public int activeShapeIndex;
     public int activePosX;
     public int activePosY;
     public int[] activeCellOffsetX;
     public int[] activeCellOffsetY;
-
-    // Queue preview (first N upcoming shapes from Board.shapesQueue)
     public int queueLength;
     public int[] upcomingShapes;
-
     public bool gameOver;
 }
 
 public static class NetMessageFactory
 {
-    public static string Wrap(string type, object inner)
+    public static string Wrap(string type, object obj)
     {
-        var env = new NetworkEnvelope
-        {
-            type = type,
-            payload = JsonUtility.ToJson(inner)
-        };
+        var env = new NetworkEnvelope { type = type, payload = JsonUtility.ToJson(obj) };
         return JsonUtility.ToJson(env) + "\n";
     }
 
@@ -62,9 +52,6 @@ public static class NetMessageFactory
             env = JsonUtility.FromJson<NetworkEnvelope>(raw);
             return env != null;
         }
-        catch
-        {
-            return false;
-        }
+        catch { return false; }
     }
 }

@@ -672,7 +672,7 @@ GameObject:
   - component: {fileID: 329705361}
   - component: {fileID: 329705366}
   m_Layer: 0
-  m_Name: Grid_GameBoard
+  m_Name: Grid_MyGameBoard
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -726,6 +726,7 @@ MonoBehaviour:
     tile: {fileID: 11400000, guid: 4690047d8c824744cad03f03ea6fe19b, type: 2}
   spawnPos: {x: -1, y: 8, z: 0}
   boardBoundsSize: {x: 10, y: 20}
+  multiplayerManager: {fileID: 557245965}
 --- !u!114 &329705363
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -782,7 +783,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BoardMultiplayerAdapter
   board: {fileID: 329705362}
-  multiplayer: {fileID: 557245965}
   queuePreviewCount: 5
 --- !u!1 &354897995
 GameObject:
@@ -795,34 +795,16 @@ GameObject:
   - component: {fileID: 354898000}
   - component: {fileID: 354897998}
   - component: {fileID: 354897997}
-  - component: {fileID: 354897999}
-  - component: {fileID: 354897996}
+  - component: {fileID: 354898002}
+  - component: {fileID: 354898001}
+  - component: {fileID: 354898003}
   m_Layer: 0
-  m_Name: Grid_GameBoard
+  m_Name: Grid_EnemyGameBoard
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &354897996
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 354897995}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d72d83786bee99a4a888d74617c8890a, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Piece
-  board: {fileID: 0}
-  cells: []
-  TBSData:
-    Shape: 0
-    tile: {fileID: 0}
-  stepDelay: 0.5
-  lockDelay: 0.5
 --- !u!114 &354897997
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -850,35 +832,6 @@ Grid:
   m_CellGap: {x: 0, y: 0, z: 0}
   m_CellLayout: 0
   m_CellSwizzle: 0
---- !u!114 &354897999
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 354897995}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: facf13aa2f81b6d4eae3b3bc5fe4597b, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Board
-  TetrisBlocks:
-  - Shape: 0
-    tile: {fileID: 11400000, guid: 69acd1cdf2ec7b042858aedcd198a552, type: 2}
-  - Shape: 1
-    tile: {fileID: 11400000, guid: a8fe0ba07b78e92428770969eb673a64, type: 2}
-  - Shape: 2
-    tile: {fileID: 11400000, guid: 98d36815ad1bcf84aa25217ed979135a, type: 2}
-  - Shape: 3
-    tile: {fileID: 11400000, guid: 90cb3d193e541b043ba5800e8174ac71, type: 2}
-  - Shape: 4
-    tile: {fileID: 11400000, guid: 9315530825ab06940a434ede1f84f1ea, type: 2}
-  - Shape: 5
-    tile: {fileID: 11400000, guid: d712e746ed153ec46b7fa5d3ccdadf31, type: 2}
-  - Shape: 6
-    tile: {fileID: 11400000, guid: 4690047d8c824744cad03f03ea6fe19b, type: 2}
-  spawnPos: {x: -1, y: 8, z: 0}
-  boardBoundsSize: {x: 10, y: 20}
 --- !u!4 &354898000
 Transform:
   m_ObjectHideFlags: 0
@@ -895,6 +848,55 @@ Transform:
   - {fileID: 149396048}
   m_Father: {fileID: 703640049}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &354898001
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 354897995}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ecdcd7377aaed9e4eb1e8d3e3e7cdcd6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BoardMultiplayerAdapter
+  board: {fileID: 354898002}
+  queuePreviewCount: 5
+--- !u!114 &354898002
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 354897995}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: facf13aa2f81b6d4eae3b3bc5fe4597b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Board
+  TetrisBlocks: []
+  spawnPos: {x: 0, y: 0, z: 0}
+  boardBoundsSize: {x: 10, y: 20}
+  multiplayerManager: {fileID: 557245965}
+--- !u!114 &354898003
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 354897995}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d72d83786bee99a4a888d74617c8890a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Piece
+  board: {fileID: 354898002}
+  cells: []
+  TBSData:
+    Shape: 0
+    tile: {fileID: 0}
+  stepDelay: 0.5
+  lockDelay: 0.5
 --- !u!1 &455397578
 GameObject:
   m_ObjectHideFlags: 0
@@ -1246,10 +1248,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MultiplayerManager
   defaultPort: 7777
-  broadcastInterval: 0.2
+  sendInterval: 0.25
+  autoImmediateSnapshotOnConnect: 1
   currentRole: 0
   lastMessage: 
-  playerId: 2b7a3c1d-2097-4206-880a-8b1b9c26051a
 --- !u!4 &557245966
 Transform:
   m_ObjectHideFlags: 0
@@ -1354,7 +1356,7 @@ GameObject:
   - component: {fileID: 703640049}
   - component: {fileID: 703640050}
   m_Layer: 0
-  m_Name: SpriteRenderer_Board2
+  m_Name: SpriteRenderer_EnemyBoard
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1436,6 +1438,53 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
+--- !u!1 &795279640
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 795279642}
+  - component: {fileID: 795279641}
+  m_Layer: 0
+  m_Name: GameObject_RemoteBoardView
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &795279641
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 795279640}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2ef368ec29827984fbcc085480758408, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::RemoteBoardView
+  tilemap: {fileID: 149396050}
+  TetrisBlocks: []
+  drawActivePiece: 1
+--- !u!4 &795279642
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 795279640}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 1.76827, y: -0.69899, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &867935239
 GameObject:
   m_ObjectHideFlags: 0
@@ -1968,7 +2017,6 @@ GameObject:
   - component: {fileID: 1333370716}
   - component: {fileID: 1333370715}
   - component: {fileID: 1333370714}
-  - component: {fileID: 1333370718}
   m_Layer: 5
   m_Name: Canvas
   m_TagString: Untagged
@@ -2063,18 +2111,6 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0, y: 0}
---- !u!114 &1333370718
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1333370713}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f7dc2e3ba24ff1e4da61b41b24671caa, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::GameManager
 --- !u!1 &1491039122
 GameObject:
   m_ObjectHideFlags: 0
@@ -2276,8 +2312,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GhostPiece
   tile: {fileID: 11400000, guid: 180bec4f82094674f85f4817c6ff1ddb, type: 2}
-  board: {fileID: 354897999}
-  trackedPiece: {fileID: 354897996}
+  board: {fileID: 0}
+  trackedPiece: {fileID: 0}
 --- !u!156049354 &1605256871
 Grid:
   m_ObjectHideFlags: 0
@@ -2455,7 +2491,7 @@ GameObject:
   - component: {fileID: 1684754415}
   - component: {fileID: 1684754414}
   m_Layer: 0
-  m_Name: SpriteRenderer_Board
+  m_Name: SpriteRenderer_MyBoard
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2857,3 +2893,4 @@ SceneRoots:
   - {fileID: 1333370717}
   - {fileID: 2117996866}
   - {fileID: 557245966}
+  - {fileID: 795279642}

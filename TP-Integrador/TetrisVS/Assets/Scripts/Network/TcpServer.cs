@@ -43,20 +43,18 @@ public class TcpServer
                     continue;
                 }
                 var client = _listener.AcceptTcpClient();
+                Debug.Log("[Server] Accepted connection from " + client.Client.RemoteEndPoint);
                 var conn = new ClientConnection(client);
                 lock (_clients) _clients.Add(conn);
                 OnClientConnected?.Invoke(conn);
-                conn.StartReceiving(line =>
-                {
-                    OnRawMessage?.Invoke(line);
-                },
-                () =>
-                {
-                    lock (_clients) _clients.Remove(conn);
-                    OnClientDisconnected?.Invoke(conn);
-                });
-                // Handshake
-                SendTo(conn, NetMessageFactory.Wrap("handshake", new HandshakeMessage { role = "server" }));
+                conn.StartReceiving(
+                    line => OnRawMessage?.Invoke(line),
+                    () =>
+                    {
+                        lock (_clients) _clients.Remove(conn);
+                        OnClientDisconnected?.Invoke(conn);
+                    });
+                // Handshake lo envía el cliente primero; podemos enviar uno también si queremos.
             }
         }
         catch (Exception ex)

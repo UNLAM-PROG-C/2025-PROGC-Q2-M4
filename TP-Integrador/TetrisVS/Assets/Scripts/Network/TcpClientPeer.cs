@@ -28,7 +28,15 @@ public class TcpClientPeer
         if (_connected) return;
         _client = new TcpClient();
         _client.NoDelay = true;
-        _client.Connect(Host, Port);
+        try
+        {
+            _client.Connect(Host, Port);
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError($"[Client] Connect failed to {Host}:{Port} - {ex.Message}");
+            return;
+        }
         var ns = _client.GetStream();
         _reader = new StreamReader(ns);
         _writer = new StreamWriter(ns) { AutoFlush = true };
