@@ -764,7 +764,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 1183996719}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4b9887caa3c534d4bbfb81cc48c73f0f, type: 3}
+  m_Script: {fileID: 11500000, guid: b70a59ebd6a5963429ff2e63ae5f5867, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::QueueRenderer
   TetrisBlocks:
@@ -978,7 +978,6 @@ GameObject:
   - component: {fileID: 1333370716}
   - component: {fileID: 1333370715}
   - component: {fileID: 1333370714}
-  - component: {fileID: 1333370718}
   m_Layer: 5
   m_Name: Canvas
   m_TagString: Untagged
@@ -1072,18 +1071,6 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0, y: 0}
---- !u!114 &1333370718
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1333370713}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f7dc2e3ba24ff1e4da61b41b24671caa, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::GameManager
 --- !u!1 &1491039122
 GameObject:
   m_ObjectHideFlags: 0

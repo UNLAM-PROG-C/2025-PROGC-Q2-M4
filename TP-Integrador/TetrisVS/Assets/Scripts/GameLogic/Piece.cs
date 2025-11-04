@@ -76,8 +76,8 @@ public class Piece : MonoBehaviour
         }
         else if (Input.GetKeyDown(KeyCode.Escape))
         {
-            board.multiplayerManager.LeaveGame();
             SceneManager.LoadScene(0);
+            board.multiplayerManager?.LeaveGame();
         }
         else if (Input.GetKeyDown(KeyCode.Q))
         {
