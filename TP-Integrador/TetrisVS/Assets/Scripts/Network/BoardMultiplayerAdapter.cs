@@ -29,7 +29,7 @@ public class BoardMultiplayerAdapter : MonoBehaviour
     private void Start()
     {
         MultiplayerManager.Instance?.RegisterLocalAdapter(this);
-        
+
         // Subscribe to board events if they exist
         SubscribeToGameEvents();
     }
@@ -38,7 +38,7 @@ public class BoardMultiplayerAdapter : MonoBehaviour
     {
         // Subscribe to board events - you'll need to add these events to your Board class
         // For now, we'll provide methods that can be called manually from your game logic
-        
+
         // Example of how you could hook into existing board events:
         // if (board != null)
         // {
@@ -102,7 +102,7 @@ public class BoardMultiplayerAdapter : MonoBehaviour
         int qLen = queuePreviewCount;
         int[] upcoming = new int[qLen];
         for (int i = 0; i < qLen; i++)
-            upcoming[i] = board.shapesQueue.peekShape(i);
+            upcoming[i] = board.shapesQueue.PeekShape(i); // Fixed: Changed from peekShape to PeekShape
 
         return new BoardStateMessage
         {
@@ -124,34 +124,44 @@ public class BoardMultiplayerAdapter : MonoBehaviour
         };
     }
 
-    // Methods to be called by game logic to trigger network events
+    // Public methods that can be called from game logic
     public void NotifyPiecePlaced()
     {
         OnPiecePlaced?.Invoke();
-        MultiplayerManager.Instance?.NotifyPiecePlaced();
+        Debug.Log("[BoardMultiplayerAdapter] Piece placed notification");
     }
 
     public void NotifyPieceMoved()
     {
         OnPieceMoved?.Invoke();
-        MultiplayerManager.Instance?.NotifyPieceMoved();
+        Debug.Log("[BoardMultiplayerAdapter] Piece moved notification");
     }
 
     public void NotifyPieceRotated()
     {
         OnPieceRotated?.Invoke();
-        MultiplayerManager.Instance?.NotifyPieceRotated();
+        Debug.Log("[BoardMultiplayerAdapter] Piece rotated notification");
     }
 
-    public void NotifyLinesCleared(int linesCount)
+    public void NotifyLinesCleared(int count)
     {
-        OnLinesCleared?.Invoke(linesCount);
-        MultiplayerManager.Instance?.NotifyLinesCleared();
+        OnLinesCleared?.Invoke(count);
+        MultiplayerManager.Instance?.NotifyLinesCleared(count); // Fixed: Added count parameter
+        Debug.Log($"[BoardMultiplayerAdapter] Lines cleared notification: {count}");
     }
 
     public void NotifyGameStateChanged()
     {
         OnGameStateChanged?.Invoke();
-        MultiplayerManager.Instance?.NotifyPlayerAction("game_state_changed");
+        // Removed NotifyPlayerAction call as it doesn't exist in MultiplayerManager
+        Debug.Log("[BoardMultiplayerAdapter] Game state changed notification");
+    }
+
+    // Method to apply remote board state (for viewing opponent's board)
+    public void ApplyRemoteBoardState(BoardStateMessage state)
+    {
+        // This would be used if you want to apply remote state to local board
+        // Usually this is handled by RemoteBoardView instead
+        Debug.Log($"[BoardMultiplayerAdapter] Received remote board state from {state.owner}");
     }
 }

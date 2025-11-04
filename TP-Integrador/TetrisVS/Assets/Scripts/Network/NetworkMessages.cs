@@ -29,6 +29,13 @@ public class BoardStateMessage
 }
 
 [Serializable]
+public class QueueSyncMessage
+{
+    public int[] upcomingShapes;
+    public int seed;
+}
+
+[Serializable]
 public class PlayerActionMessage
 {
     public string action;

@@ -3,27 +3,27 @@ using UnityEngine.Tilemaps;
 
 public class QueueRenderer : MonoBehaviour
 {
-    public ShapesQueue shapesQueue = new ShapesQueue();
+    public SharedShapesQueue shapesQueue; // Changed to SharedShapesQueue
     public Tilemap tilemap { get; private set; }
     public TetrisBlockShapeData[] TetrisBlocks;
     public Vector3Int spawnPos;
     public Vector2Int boardBoundsSize = new Vector2Int(4, 20);
-    public int queueRenderSize;
+    public int queueRenderSize = 5;
 
     private bool isInitialized = false;
+    private Board board;
 
     void Awake()
     {
         this.tilemap = GetComponentInChildren<Tilemap>();
+        this.board = FindObjectOfType<Board>();
 
-        // Validate TetrisBlocks before initialization
         if (TetrisBlocks == null || TetrisBlocks.Length == 0)
         {
             Debug.LogError("QueueRenderer: TetrisBlocks array is null or empty! Please assign Tetris block data in the inspector.");
             return;
         }
 
-        // Initialize TetrisBlocks safely
         for (int i = 0; i < this.TetrisBlocks.Length; i++)
         {
             if (TetrisBlocks[i].tile != null)
@@ -37,8 +37,6 @@ public class QueueRenderer : MonoBehaviour
         }
 
         isInitialized = true;
-
-        // Debug logging
         Debug.Log($"QueueRenderer Awake: queueRenderSize = {queueRenderSize}");
         Debug.Log($"QueueRenderer Awake: TetrisBlocks.Length = {TetrisBlocks.Length}");
         Debug.Log($"QueueRenderer Awake: tilemap = {(tilemap != null ? "Found" : "NULL")}");
@@ -46,16 +44,17 @@ public class QueueRenderer : MonoBehaviour
 
     void Start()
     {
-        if (isInitialized && shapesQueue != null)
+        // Use the shared queue from the board
+        if (board != null && board.shapesQueue != null)
         {
-            // Test the queue
-            Debug.Log($"QueueRenderer Start: First piece in queue = {shapesQueue.peekShape(0)}");
+            shapesQueue = board.shapesQueue;
+            Debug.Log($"QueueRenderer Start: Using shared queue from board");
         }
     }
 
     void Update()
     {
-        if (isInitialized)
+        if (isInitialized && shapesQueue != null)
         {
             RenderQueue();
         }
@@ -63,7 +62,6 @@ public class QueueRenderer : MonoBehaviour
 
     public void RenderQueue()
     {
-        // Comprehensive validation before rendering
         if (!isInitialized || 
             this.tilemap == null || 
             this.TetrisBlocks == null || 
@@ -78,14 +76,12 @@ public class QueueRenderer : MonoBehaviour
 
         for (int y = 0; y < queueRenderSize; y++)
         {
-            int shapeIndex = shapesQueue.peekShape(y);
+            int shapeIndex = shapesQueue.PeekShape(y);
 
-            // Validate shape index
             if (shapeIndex >= 0 && shapeIndex < TetrisBlocks.Length)
             {
                 TetrisBlockShapeData blockData = this.TetrisBlocks[shapeIndex];
                 
-                // Validate block data
                 if (blockData.tile == null || blockData.cells == null)
                 {
                     Debug.LogError($"QueueRenderer: Invalid block data at index {shapeIndex}");
@@ -105,7 +101,6 @@ public class QueueRenderer : MonoBehaviour
         }
     }
 
-    // Method to refresh the queue renderer (useful for multiplayer synchronization)
     public void RefreshQueue()
     {
         if (isInitialized)
@@ -114,13 +109,13 @@ public class QueueRenderer : MonoBehaviour
         }
     }
 
-    // Method to set a new shapes queue (useful for multiplayer)
-    public void SetShapesQueue(ShapesQueue newQueue)
+    public void SetShapesQueue(SharedShapesQueue newQueue)
     {
         if (newQueue != null)
         {
             shapesQueue = newQueue;
             RefreshQueue();
+            Debug.Log("QueueRenderer: Shapes queue updated and refreshed");
         }
     }
 }

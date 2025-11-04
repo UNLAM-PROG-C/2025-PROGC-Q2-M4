@@ -95,8 +95,13 @@ public class MultiplayerManager : MonoBehaviour
         {
             Debug.Log("[Server] Cliente conectado -> snapshot inmediato host.");
             SendImmediateBoardState();
+            BroadcastQueueUpdate(); // Send queue state to new client
         };
         _server.Start();
+        
+        // Initialize server queue
+        InitializeServerQueue();
+        
         Debug.Log("[MultiplayerManager] Host iniciado.");
     }
 
@@ -122,101 +127,88 @@ public class MultiplayerManager : MonoBehaviour
         if (autoImmediateSnapshotOnConnect) SendImmediateBoardState();
     }
 
-    // Event-driven methods with throttling
-    private void TriggerBoardStateUpdate(bool forceImmediate = false)
+    public void LeaveGame()
     {
-        if (currentRole == MultiplayerRole.None || _localAdapter == null) return;
-        
-        // Throttle updates unless forced
-        if (!forceImmediate && Time.time - _lastSendTime < minSendInterval) return;
-
-        var state = _localAdapter.CaptureBoardState();
-        OnBoardStateChanged?.Invoke(state);
-        _lastSendTime = Time.time;
+        if (_server != null) _server.Stop();
+        if (_client != null) _client.Disconnect();
+        currentRole = MultiplayerRole.None;
+        Debug.Log("[MultiplayerManager] Juego abandonado.");
     }
 
-    private void TriggerGameStateUpdate()
+    // Queue synchronization methods
+    private void InitializeServerQueue()
     {
-        OnGameStateChanged?.Invoke();
-    }
-
-    private void TriggerPlayerAction(string action)
-    {
-        OnPlayerAction?.Invoke(action);
-    }
-
-    // Event handlers
-    private void HandleBoardStateChanged(BoardStateMessage state)
-    {
-        SendBoardState(state);
-    }
-
-    private void HandlePlayerAction(string action)
-    {
-        // Handle specific player actions that need immediate network sync
-        string msg = NetMessageFactory.Wrap("player_action", new PlayerActionMessage { action = action, timestamp = Time.time });
-        
-        if (IsServer) _server?.Broadcast(msg);
-        else if (IsClient) _client?.Send(msg);
-    }
-
-    private void HandleGameStateChanged()
-    {
-        // Send immediate board state when game state changes (like lines cleared)
-        TriggerBoardStateUpdate(true);
-    }
-
-    public void SendImmediateBoardState()
-    {
-        if (_localAdapter == null)
+        if (_localAdapter?.board != null)
         {
-            _localAdapter = FindObjectOfType<BoardMultiplayerAdapter>();
-            if (_localAdapter != null)
-                Debug.Log("[MultiplayerManager] LocalAdapter encontrado tardíamente.");
+            // Server initializes with a new random seed
+            _localAdapter.board.shapesQueue = new SharedShapesQueue();
+            Debug.Log($"[Server] Queue initialized with seed: {_localAdapter.board.shapesQueue.Seed}");
         }
-        if (_localAdapter == null) return;
-
-        var state = _localAdapter.CaptureBoardState();
-        state.owner = IsServer ? "host" : "client";
-        SendBoardState(state);
     }
 
-    private void SendBoardState(BoardStateMessage state)
+    public void BroadcastQueueUpdate()
     {
-        state.owner = IsServer ? "host" : "client";
-        string msg = NetMessageFactory.Wrap("board_state", state);
+        if (!IsServer || _localAdapter?.board?.shapesQueue == null) return;
+        
+        var queueState = _localAdapter.board.shapesQueue.GetQueueState();
+        var msg = NetMessageFactory.Wrap("queue_sync", new QueueSyncMessage
+        {
+            upcomingShapes = queueState.upcomingShapes,
+            seed = queueState.seed
+        });
+        
+        _server?.Broadcast(msg);
+        Debug.Log($"[Server] Broadcasting queue update with {queueState.upcomingShapes.Length} shapes");
+    }
 
-        if (IsServer) _server?.Broadcast(msg);
-        else if (IsClient) _client?.Send(msg);
+    public void InitializeClientQueue(int serverSeed)
+    {
+        if (_localAdapter?.board != null)
+        {
+            _localAdapter.board.shapesQueue = new SharedShapesQueue(serverSeed);
+            Debug.Log($"[Client] Queue synchronized with server seed: {serverSeed}");
+            
+            // Also update queue renderer if it exists
+            var queueRenderer = FindObjectOfType<QueueRenderer>();
+            if (queueRenderer != null)
+            {
+                queueRenderer.SetShapesQueue(_localAdapter.board.shapesQueue);
+            }
+        }
     }
 
     private void HandleIncomingServerSide(string raw)
     {
+        if (!NetMessageFactory.TryUnwrap(raw, out var envelope)) return;
+        lastMessage = envelope.type;
+
         ThreadDispatcher.Instance.Enqueue(() =>
         {
-            lastMessage = raw;
-            if (!NetMessageFactory.TryUnwrap(raw, out var env)) return;
-            
-            switch (env.type)
+            switch (envelope.type)
             {
-                case "board_state":
-                    var state = JsonUtility.FromJson<BoardStateMessage>(env.payload);
-                    if (state.owner == "client")
+                case "handshake":
+                    var handshake = JsonUtility.FromJson<HandshakeMessage>(envelope.payload);
+                    if (handshake.role == "client")
                     {
-                        EnsureRemoteView();
-                        _remoteView?.ApplyBoardState(state);
-                        DebugOverlay.LastRemoteUpdateTime = Time.time;
+                        Debug.Log("[Server] Client handshake received, sending queue state");
+                        // Send initial queue state to new client
+                        BroadcastQueueUpdate();
                     }
                     break;
-                    
-                case "player_action":
-                    var actionData = JsonUtility.FromJson<PlayerActionMessage>(env.payload);
-                    ProcessRemotePlayerAction(actionData.action);
+
+                case "board_state":
+                    var boardState = JsonUtility.FromJson<BoardStateMessage>(envelope.payload);
+                    _remoteView?.ApplyBoardState(boardState);
+                    OnBoardStateChanged?.Invoke(boardState);
                     break;
-                    
-                case "handshake":
-                    var handshake = JsonUtility.FromJson<HandshakeMessage>(env.payload);
-                    Debug.Log($"[Server] Handshake received from {handshake.role}");
+
+                case "player_action":
+                    var action = JsonUtility.FromJson<PlayerActionMessage>(envelope.payload);
+                    OnPlayerAction?.Invoke(action.action);
+                    break;
+
+                case "game_state":
+                    OnGameStateChanged?.Invoke();
                     break;
             }
         });
@@ -224,68 +216,124 @@ public class MultiplayerManager : MonoBehaviour
 
     private void HandleIncomingClientSide(string raw)
     {
+        if (!NetMessageFactory.TryUnwrap(raw, out var envelope)) return;
+        lastMessage = envelope.type;
+
         ThreadDispatcher.Instance.Enqueue(() =>
         {
-            lastMessage = raw;
-            if (!NetMessageFactory.TryUnwrap(raw, out var env)) return;
-            
-            switch (env.type)
+            switch (envelope.type)
             {
-                case "board_state":
-                    var state = JsonUtility.FromJson<BoardStateMessage>(env.payload);
-                    if (state.owner == "host")
+                case "queue_sync":
+                    var queueSync = JsonUtility.FromJson<QueueSyncMessage>(envelope.payload);
+                    Debug.Log($"[Client] Received queue sync with seed: {queueSync.seed}");
+                    
+                    var queueState = new QueueStateMessage
                     {
-                        EnsureRemoteView();
-                        _remoteView?.ApplyBoardState(state);
-                        DebugOverlay.LastRemoteUpdateTime = Time.time;
+                        upcomingShapes = queueSync.upcomingShapes,
+                        seed = queueSync.seed
+                    };
+                    _localAdapter?.board?.SynchronizeQueue(queueState);
+                    
+                    // Update queue renderer
+                    var queueRenderer = FindObjectOfType<QueueRenderer>();
+                    if (queueRenderer != null)
+                    {
+                        queueRenderer.RefreshQueue();
                     }
                     break;
-                    
+
+                case "board_state":
+                    var boardState = JsonUtility.FromJson<BoardStateMessage>(envelope.payload);
+                    _remoteView?.ApplyBoardState(boardState);
+                    OnBoardStateChanged?.Invoke(boardState);
+                    break;
+
                 case "player_action":
-                    var actionData = JsonUtility.FromJson<PlayerActionMessage>(env.payload);
-                    ProcessRemotePlayerAction(actionData.action);
+                    var action = JsonUtility.FromJson<PlayerActionMessage>(envelope.payload);
+                    OnPlayerAction?.Invoke(action.action);
+                    break;
+
+                case "game_state":
+                    OnGameStateChanged?.Invoke();
                     break;
             }
         });
     }
 
-    private void ProcessRemotePlayerAction(string action)
+    // Event handlers
+    private void HandleBoardStateChanged(BoardStateMessage state)
     {
-        // Process incoming player actions from remote player
-        Debug.Log($"[MultiplayerManager] Remote player action: {action}");
-        // Add your specific action handling here
+        Debug.Log($"[MultiplayerManager] Board state changed for {state.owner}");
     }
 
-    private void EnsureRemoteView()
+    private void HandlePlayerAction(string action)
     {
-        if (_remoteView == null)
+        Debug.Log($"[MultiplayerManager] Player action: {action}");
+    }
+
+    private void HandleGameStateChanged()
+    {
+        Debug.Log("[MultiplayerManager] Game state changed");
+    }
+
+    // Network update methods
+    public void TriggerBoardStateUpdate(bool forceImmediate = false)
+    {
+        if (!forceImmediate && Time.time - _lastSendTime < minSendInterval)
+            return;
+
+        SendImmediateBoardState();
+        _lastSendTime = Time.time;
+    }
+
+    public void TriggerGameStateUpdate()
+    {
+        var msg = NetMessageFactory.Wrap("game_state", new GameStateMessage
         {
-            _remoteView = FindObjectOfType<RemoteBoardView>();
-            if (_remoteView != null)
-                Debug.Log("[MultiplayerManager] RemoteView encontrado tardíamente.");
-        }
+            state = "updated",
+            timestamp = Time.time
+        });
+
+        if (IsServer) _server?.Broadcast(msg);
+        else if (IsClient) _client?.Send(msg);
     }
 
-    public void LeaveGame()
+    public void SendImmediateBoardState()
     {
+        if (_localAdapter == null) return;
+
+        var state = _localAdapter.CaptureBoardState();
+        state.owner = IsServer ? "server" : "client";
+        
+        var msg = NetMessageFactory.Wrap("board_state", state);
+
+        if (IsServer) _server?.Broadcast(msg);
+        else if (IsClient) _client?.Send(msg);
+    }
+
+    // Notification methods for game events
+    public void NotifyPiecePlaced()
+    {
+        TriggerBoardStateUpdate(true);
         if (IsServer)
         {
-            _server?.Stop();
-            _server = null;
+            BroadcastQueueUpdate(); // Update queue when piece is placed
         }
-        else if (IsClient)
-        {
-            _client?.Disconnect();
-            _client = null;
-        }
-        currentRole = MultiplayerRole.None;
-        Debug.Log("[MultiplayerManager] Juego abandonado.");
     }
 
-    // Public methods for triggering network events from game logic
-    public void NotifyPiecePlaced() => TriggerBoardStateUpdate(true); // Force immediate
-    public void NotifyPieceMoved() => TriggerBoardStateUpdate(false); // Throttled
-    public void NotifyPieceRotated() => TriggerBoardStateUpdate(false); // Throttled
-    public void NotifyLinesCleared() => TriggerGameStateUpdate();
-    public void NotifyPlayerAction(string action) => TriggerPlayerAction(action);
+    public void NotifyPieceMoved()
+    {
+        TriggerBoardStateUpdate(false);
+    }
+
+    public void NotifyPieceRotated()
+    {
+        TriggerBoardStateUpdate(false);
+    }
+
+    public void NotifyLinesCleared(int count)
+    {
+        TriggerGameStateUpdate();
+        TriggerBoardStateUpdate(true);
+    }
 }
