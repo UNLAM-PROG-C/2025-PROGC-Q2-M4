@@ -1893,7 +1893,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::GhostPiece
   tile: {fileID: 11400000, guid: 180bec4f82094674f85f4817c6ff1ddb, type: 2}
   board: {fileID: 354898002}
-  trackedPiece: {fileID: 0}
+  trackedPiece: {fileID: 354898003}
 --- !u!156049354 &1605256871
 Grid:
   m_ObjectHideFlags: 0

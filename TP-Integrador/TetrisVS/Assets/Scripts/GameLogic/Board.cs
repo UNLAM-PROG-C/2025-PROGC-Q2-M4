@@ -20,7 +20,6 @@ public class Board : MonoBehaviour
         }
     }
 
-
     private void Awake()
     {
         this.tilemap = GetComponentInChildren<Tilemap>();
@@ -30,30 +29,49 @@ public class Board : MonoBehaviour
         Debug.Log($"Board Awake: TetrisBlocks is {(TetrisBlocks != null ? "not null" : "NULL")}");
         Debug.Log($"Board Awake: TetrisBlocks.Length = {(TetrisBlocks != null ? TetrisBlocks.Length : 0)}");
 
-        if (TetrisBlocks != null)
+        // Validate TetrisBlocks array
+        if (TetrisBlocks == null || TetrisBlocks.Length == 0)
         {
-            for (int i = 0; i < this.TetrisBlocks.Length; i++)
+            Debug.LogError("Board: TetrisBlocks array is null or empty! Please assign Tetris block data in the inspector.");
+            return;
+        }
+
+        // Initialize TetrisBlocks
+        for (int i = 0; i < this.TetrisBlocks.Length; i++)
+        {
+            if (TetrisBlocks[i].tile != null)
             {
-                // For structs, check if the tile is null instead
-                if (TetrisBlocks[i].tile != null)
-                {
-                    this.TetrisBlocks[i].Initialize();
-                }
-                else
-                {
-                    Debug.LogError($"TetrisBlocks[{i}].tile is NULL!");
-                }
+                this.TetrisBlocks[i].Initialize();
+            }
+            else
+            {
+                Debug.LogError($"TetrisBlocks[{i}].tile is NULL!");
             }
         }
     }
 
     private void Start()
     {
-        SpawnPiece();
+        // Only spawn piece if TetrisBlocks is properly initialized
+        if (TetrisBlocks != null && TetrisBlocks.Length > 0)
+        {
+            SpawnPiece();
+        }
+        else
+        {
+            Debug.LogError("Board: Cannot spawn piece - TetrisBlocks not properly initialized!");
+        }
     }
 
     public void SpawnPiece()
     {
+        // Safety check for TetrisBlocks
+        if (TetrisBlocks == null || TetrisBlocks.Length == 0)
+        {
+            Debug.LogError("Board: Cannot spawn piece - TetrisBlocks array is null or empty!");
+            return;
+        }
+
         int shapeIndex = shapesQueue.getShape();
 
         // Safety check to prevent IndexOutOfRangeException
@@ -61,9 +79,23 @@ public class Board : MonoBehaviour
         {
             Debug.LogError($"Invalid shape index: {shapeIndex}, TetrisBlocks.Length: {TetrisBlocks.Length}");
             shapeIndex = 0; // Use first piece as fallback
+            
+            // If still invalid, return early
+            if (shapeIndex >= TetrisBlocks.Length)
+            {
+                Debug.LogError("Board: Cannot spawn piece - no valid shapes available!");
+                return;
+            }
         }
 
         TetrisBlockShapeData data = this.TetrisBlocks[shapeIndex];
+
+        // Validate the shape data
+        if (data.tile == null)
+        {
+            Debug.LogError($"Board: TetrisBlocks[{shapeIndex}] has null tile!");
+            return;
+        }
 
         this.activePiece.Initialize(this, spawnPos, data);
 
@@ -81,25 +113,19 @@ public class Board : MonoBehaviour
     {
         for (int i = 0; i < piece.cells.Length; i++)
         {
-            Vector3Int tilePosition = piece.cells[i] + piece.position; //set the piece to their default piece value + the new coordinate on the board
+            Vector3Int tilePosition = piece.cells[i] + piece.position;
             this.tilemap.SetTile(tilePosition, piece.TBSData.tile);
-
         }
     }
-
 
     public void Clear(Piece piece)
     {
         for (int i = 0; i < piece.cells.Length; i++)
         {
-            Vector3Int tilePosition = piece.cells[i] + piece.position; //set the piece to their default piece value + the new coordinate on the board
+            Vector3Int tilePosition = piece.cells[i] + piece.position;
             this.tilemap.SetTile(tilePosition, null);
         }
     }
-
-
-
-
 
     public bool IsValidPosition(Piece piece, Vector3Int position)
     {
@@ -118,7 +144,6 @@ public class Board : MonoBehaviour
             {
                 return false;
             }
-
         }
         return true;
     }
