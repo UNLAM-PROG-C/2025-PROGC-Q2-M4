@@ -21,13 +21,29 @@ public class Board : MonoBehaviour
     }
 
 
-    private void Awake() //unity method that gets called when the component, in this case Board gets initialized
+    private void Awake()
     {
         this.tilemap = GetComponentInChildren<Tilemap>();
         this.activePiece = GetComponentInChildren<Piece>();
-        for (int i = 0; i < this.TetrisBlocks.Length; i++)
+
+        // Debug the TetrisBlocks array
+        Debug.Log($"Board Awake: TetrisBlocks is {(TetrisBlocks != null ? "not null" : "NULL")}");
+        Debug.Log($"Board Awake: TetrisBlocks.Length = {(TetrisBlocks != null ? TetrisBlocks.Length : 0)}");
+
+        if (TetrisBlocks != null)
         {
-            this.TetrisBlocks[i].Initialize();
+            for (int i = 0; i < this.TetrisBlocks.Length; i++)
+            {
+                // For structs, check if the tile is null instead
+                if (TetrisBlocks[i].tile != null)
+                {
+                    this.TetrisBlocks[i].Initialize();
+                }
+                else
+                {
+                    Debug.LogError($"TetrisBlocks[{i}].tile is NULL!");
+                }
+            }
         }
     }
 
@@ -38,18 +54,27 @@ public class Board : MonoBehaviour
 
     public void SpawnPiece()
     {
-        TetrisBlockShapeData data = this.TetrisBlocks[shapesQueue.getShape()];
+        int shapeIndex = shapesQueue.getShape();
+
+        // Safety check to prevent IndexOutOfRangeException
+        if (shapeIndex < 0 || shapeIndex >= TetrisBlocks.Length)
+        {
+            Debug.LogError($"Invalid shape index: {shapeIndex}, TetrisBlocks.Length: {TetrisBlocks.Length}");
+            shapeIndex = 0; // Use first piece as fallback
+        }
+
+        TetrisBlockShapeData data = this.TetrisBlocks[shapeIndex];
 
         this.activePiece.Initialize(this, spawnPos, data);
 
         if (IsValidPosition(this.activePiece, this.spawnPos))
         {
             Set(this.activePiece);
-        } else {
+        }
+        else
+        {
             GameOver();
         }
-
-
     }
 
     public void Set(Piece piece)

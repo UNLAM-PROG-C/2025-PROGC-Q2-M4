@@ -832,8 +832,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MultiplayerManager
   defaultPort: 7777
-  sendInterval: 0.25
   autoImmediateSnapshotOnConnect: 1
+  minSendInterval: 0.05
   currentRole: 0
   lastMessage: 
 --- !u!4 &557245966
@@ -974,7 +974,21 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RemoteBoardView
   tilemap: {fileID: 149396050}
-  TetrisBlocks: []
+  TetrisBlocks:
+  - Shape: 0
+    tile: {fileID: 11400000, guid: 69acd1cdf2ec7b042858aedcd198a552, type: 2}
+  - Shape: 1
+    tile: {fileID: 11400000, guid: a8fe0ba07b78e92428770969eb673a64, type: 2}
+  - Shape: 2
+    tile: {fileID: 11400000, guid: 98d36815ad1bcf84aa25217ed979135a, type: 2}
+  - Shape: 3
+    tile: {fileID: 11400000, guid: 90cb3d193e541b043ba5800e8174ac71, type: 2}
+  - Shape: 4
+    tile: {fileID: 11400000, guid: 9315530825ab06940a434ede1f84f1ea, type: 2}
+  - Shape: 5
+    tile: {fileID: 11400000, guid: d712e746ed153ec46b7fa5d3ccdadf31, type: 2}
+  - Shape: 6
+    tile: {fileID: 11400000, guid: 4690047d8c824744cad03f03ea6fe19b, type: 2}
   drawActivePiece: 1
 --- !u!4 &795279642
 Transform:
@@ -1309,7 +1323,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 1183996719}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4b9887caa3c534d4bbfb81cc48c73f0f, type: 3}
+  m_Script: {fileID: 11500000, guid: b70a59ebd6a5963429ff2e63ae5f5867, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::QueueRenderer
   TetrisBlocks:
@@ -1329,7 +1343,7 @@ MonoBehaviour:
     tile: {fileID: 11400000, guid: 4690047d8c824744cad03f03ea6fe19b, type: 2}
   spawnPos: {x: 0, y: -10, z: 0}
   boardBoundsSize: {x: 4, y: 20}
-  queueRenderSize: 5
+  queueRenderSize: 4
 --- !u!1 &1189491356
 GameObject:
   m_ObjectHideFlags: 0

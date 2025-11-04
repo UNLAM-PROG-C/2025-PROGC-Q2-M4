@@ -9,6 +9,9 @@ public class MultiplayerManager : MonoBehaviour
 
     public int defaultPort = 7777;
     public bool autoImmediateSnapshotOnConnect = true;
+    
+    [Header("Network Throttling")]
+    public float minSendInterval = 0.05f; // Minimum time between sends (20fps max)
 
     [SerializeField] private MultiplayerRole currentRole = MultiplayerRole.None;
     [SerializeField] private string lastMessage;
@@ -17,6 +20,7 @@ public class MultiplayerManager : MonoBehaviour
     private TcpClientPeer _client;
     private BoardMultiplayerAdapter _localAdapter;
     private RemoteBoardView _remoteView;
+    private float _lastSendTime;
 
     // Event-based networking events
     public static event System.Action<BoardStateMessage> OnBoardStateChanged;
@@ -61,10 +65,10 @@ public class MultiplayerManager : MonoBehaviour
         // Subscribe to adapter events for immediate network updates
         if (_localAdapter != null)
         {
-            _localAdapter.OnPiecePlaced += () => TriggerBoardStateUpdate();
+            _localAdapter.OnPiecePlaced += () => TriggerBoardStateUpdate(true); // Force immediate for piece placement
             _localAdapter.OnLinesCleared += (lines) => TriggerGameStateUpdate();
-            _localAdapter.OnPieceRotated += () => TriggerBoardStateUpdate();
-            _localAdapter.OnPieceMoved += () => TriggerBoardStateUpdate();
+            _localAdapter.OnPieceRotated += () => TriggerBoardStateUpdate(false); // Throttled for rotation
+            _localAdapter.OnPieceMoved += () => TriggerBoardStateUpdate(false); // Throttled for movement
         }
         
         Debug.Log("[MultiplayerManager] LocalAdapter registrado.");
@@ -118,13 +122,17 @@ public class MultiplayerManager : MonoBehaviour
         if (autoImmediateSnapshotOnConnect) SendImmediateBoardState();
     }
 
-    // Event-driven methods
-    private void TriggerBoardStateUpdate()
+    // Event-driven methods with throttling
+    private void TriggerBoardStateUpdate(bool forceImmediate = false)
     {
         if (currentRole == MultiplayerRole.None || _localAdapter == null) return;
         
+        // Throttle updates unless forced
+        if (!forceImmediate && Time.time - _lastSendTime < minSendInterval) return;
+
         var state = _localAdapter.CaptureBoardState();
         OnBoardStateChanged?.Invoke(state);
+        _lastSendTime = Time.time;
     }
 
     private void TriggerGameStateUpdate()
@@ -155,7 +163,7 @@ public class MultiplayerManager : MonoBehaviour
     private void HandleGameStateChanged()
     {
         // Send immediate board state when game state changes (like lines cleared)
-        TriggerBoardStateUpdate();
+        TriggerBoardStateUpdate(true);
     }
 
     public void SendImmediateBoardState()
@@ -275,9 +283,9 @@ public class MultiplayerManager : MonoBehaviour
     }
 
     // Public methods for triggering network events from game logic
-    public void NotifyPiecePlaced() => TriggerBoardStateUpdate();
-    public void NotifyPieceMoved() => TriggerBoardStateUpdate();
-    public void NotifyPieceRotated() => TriggerBoardStateUpdate();
+    public void NotifyPiecePlaced() => TriggerBoardStateUpdate(true); // Force immediate
+    public void NotifyPieceMoved() => TriggerBoardStateUpdate(false); // Throttled
+    public void NotifyPieceRotated() => TriggerBoardStateUpdate(false); // Throttled
     public void NotifyLinesCleared() => TriggerGameStateUpdate();
     public void NotifyPlayerAction(string action) => TriggerPlayerAction(action);
 }

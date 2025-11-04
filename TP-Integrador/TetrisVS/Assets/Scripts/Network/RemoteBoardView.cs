@@ -20,9 +20,11 @@ public class RemoteBoardView : MonoBehaviour
     public void ApplyBoardState(BoardStateMessage state)
     {
         if (tilemap == null || TetrisBlocks == null || TetrisBlocks.Length == 0) return;
+        
+        // Always clear all tiles first - this ensures no ghosting
         tilemap.ClearAllTiles();
 
-        // Locked
+        // Apply locked tiles
         for (int i = 0; i < state.lockedCount; i++)
         {
             int shapeIdx = state.lockedShapeIndex[i];
@@ -33,7 +35,7 @@ public class RemoteBoardView : MonoBehaviour
             }
         }
 
-        // Active
+        // Apply active piece
         if (drawActivePiece && state.hasActive && state.activeShapeIndex >= 0 && state.activeShapeIndex < TetrisBlocks.Length)
         {
             var shapeData = TetrisBlocks[state.activeShapeIndex];
