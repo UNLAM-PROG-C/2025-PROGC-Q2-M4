@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Tilemaps;
@@ -5,6 +6,13 @@ using UnityEngine.Tilemaps;
 [RequireComponent(typeof(Board))]
 public class BoardMultiplayerAdapter : MonoBehaviour
 {
+    // Events for triggering network updates
+    public event System.Action OnPiecePlaced;
+    public event System.Action OnPieceRotated;
+    public event System.Action OnPieceMoved;
+    public event System.Action<int> OnLinesCleared;
+    public event System.Action OnGameStateChanged;
+
     public Board board;
     public int queuePreviewCount = 5;
 
@@ -21,6 +29,22 @@ public class BoardMultiplayerAdapter : MonoBehaviour
     private void Start()
     {
         MultiplayerManager.Instance?.RegisterLocalAdapter(this);
+        
+        // Subscribe to board events if they exist
+        SubscribeToGameEvents();
+    }
+
+    private void SubscribeToGameEvents()
+    {
+        // Subscribe to board events - you'll need to add these events to your Board class
+        // For now, we'll provide methods that can be called manually from your game logic
+        
+        // Example of how you could hook into existing board events:
+        // if (board != null)
+        // {
+        //     board.OnLineClear += (lines) => OnLinesCleared?.Invoke(lines);
+        //     board.OnPieceLocked += () => OnPiecePlaced?.Invoke();
+        // }
     }
 
     private void BuildLookup()
@@ -98,5 +122,36 @@ public class BoardMultiplayerAdapter : MonoBehaviour
             upcomingShapes = upcoming,
             gameOver = false
         };
+    }
+
+    // Methods to be called by game logic to trigger network events
+    public void NotifyPiecePlaced()
+    {
+        OnPiecePlaced?.Invoke();
+        MultiplayerManager.Instance?.NotifyPiecePlaced();
+    }
+
+    public void NotifyPieceMoved()
+    {
+        OnPieceMoved?.Invoke();
+        MultiplayerManager.Instance?.NotifyPieceMoved();
+    }
+
+    public void NotifyPieceRotated()
+    {
+        OnPieceRotated?.Invoke();
+        MultiplayerManager.Instance?.NotifyPieceRotated();
+    }
+
+    public void NotifyLinesCleared(int linesCount)
+    {
+        OnLinesCleared?.Invoke(linesCount);
+        MultiplayerManager.Instance?.NotifyLinesCleared();
+    }
+
+    public void NotifyGameStateChanged()
+    {
+        OnGameStateChanged?.Invoke();
+        MultiplayerManager.Instance?.NotifyPlayerAction("game_state_changed");
     }
 }

@@ -8,17 +8,20 @@ public class MultiplayerManager : MonoBehaviour
     public static MultiplayerManager Instance { get; private set; }
 
     public int defaultPort = 7777;
-    public float sendInterval = 0.25f;
     public bool autoImmediateSnapshotOnConnect = true;
 
     [SerializeField] private MultiplayerRole currentRole = MultiplayerRole.None;
     [SerializeField] private string lastMessage;
 
-    private float _sendTimer;
     private TcpServer _server;
     private TcpClientPeer _client;
     private BoardMultiplayerAdapter _localAdapter;
     private RemoteBoardView _remoteView;
+
+    // Event-based networking events
+    public static event System.Action<BoardStateMessage> OnBoardStateChanged;
+    public static event System.Action<string> OnPlayerAction;
+    public static event System.Action OnGameStateChanged;
 
     public bool IsServer => currentRole == MultiplayerRole.Host;
     public bool IsClient => currentRole == MultiplayerRole.Client;
@@ -33,24 +36,40 @@ public class MultiplayerManager : MonoBehaviour
         DontDestroyOnLoad(gameObject);
         Application.runInBackground = true;
         Debug.Log("[MultiplayerManager] Awake");
+
+        // Subscribe to network events
+        OnBoardStateChanged += HandleBoardStateChanged;
+        OnPlayerAction += HandlePlayerAction;
+        OnGameStateChanged += HandleGameStateChanged;
     }
 
-    private void Update()
+    private void OnDestroy()
     {
-        if (currentRole == MultiplayerRole.None) return;
-        _sendTimer += Time.deltaTime;
-        if (_sendTimer >= sendInterval)
-        {
-            _sendTimer = 0f;
-            SendLocalBoardState();
-        }
+        // Unsubscribe from events
+        OnBoardStateChanged -= HandleBoardStateChanged;
+        OnPlayerAction -= HandlePlayerAction;
+        OnGameStateChanged -= HandleGameStateChanged;
+
+        if (_server != null) _server.Stop();
+        if (_client != null) _client.Disconnect();
     }
 
     public void RegisterLocalAdapter(BoardMultiplayerAdapter adapter)
     {
         _localAdapter = adapter;
+        
+        // Subscribe to adapter events for immediate network updates
+        if (_localAdapter != null)
+        {
+            _localAdapter.OnPiecePlaced += () => TriggerBoardStateUpdate();
+            _localAdapter.OnLinesCleared += (lines) => TriggerGameStateUpdate();
+            _localAdapter.OnPieceRotated += () => TriggerBoardStateUpdate();
+            _localAdapter.OnPieceMoved += () => TriggerBoardStateUpdate();
+        }
+        
         Debug.Log("[MultiplayerManager] LocalAdapter registrado.");
     }
+
     public void RegisterBoardAdapter(BoardMultiplayerAdapter adapter) => RegisterLocalAdapter(adapter);
 
     public void RegisterRemoteView(RemoteBoardView view)
@@ -71,7 +90,7 @@ public class MultiplayerManager : MonoBehaviour
         _server.OnClientConnected += _ =>
         {
             Debug.Log("[Server] Cliente conectado -> snapshot inmediato host.");
-            ForceImmediateSend();
+            SendImmediateBoardState();
         };
         _server.Start();
         Debug.Log("[MultiplayerManager] Host iniciado.");
@@ -96,16 +115,50 @@ public class MultiplayerManager : MonoBehaviour
         };
         _client.Connect();
         Debug.Log("[MultiplayerManager] Intentando conectar a " + ip);
-        if (autoImmediateSnapshotOnConnect) ForceImmediateSend();
+        if (autoImmediateSnapshotOnConnect) SendImmediateBoardState();
     }
 
-    public void ForceImmediateSend()
+    // Event-driven methods
+    private void TriggerBoardStateUpdate()
     {
-        _sendTimer = sendInterval;
-        SendLocalBoardState();
+        if (currentRole == MultiplayerRole.None || _localAdapter == null) return;
+        
+        var state = _localAdapter.CaptureBoardState();
+        OnBoardStateChanged?.Invoke(state);
     }
 
-    private void SendLocalBoardState()
+    private void TriggerGameStateUpdate()
+    {
+        OnGameStateChanged?.Invoke();
+    }
+
+    private void TriggerPlayerAction(string action)
+    {
+        OnPlayerAction?.Invoke(action);
+    }
+
+    // Event handlers
+    private void HandleBoardStateChanged(BoardStateMessage state)
+    {
+        SendBoardState(state);
+    }
+
+    private void HandlePlayerAction(string action)
+    {
+        // Handle specific player actions that need immediate network sync
+        string msg = NetMessageFactory.Wrap("player_action", new PlayerActionMessage { action = action, timestamp = Time.time });
+        
+        if (IsServer) _server?.Broadcast(msg);
+        else if (IsClient) _client?.Send(msg);
+    }
+
+    private void HandleGameStateChanged()
+    {
+        // Send immediate board state when game state changes (like lines cleared)
+        TriggerBoardStateUpdate();
+    }
+
+    public void SendImmediateBoardState()
     {
         if (_localAdapter == null)
         {
@@ -116,6 +169,12 @@ public class MultiplayerManager : MonoBehaviour
         if (_localAdapter == null) return;
 
         var state = _localAdapter.CaptureBoardState();
+        state.owner = IsServer ? "host" : "client";
+        SendBoardState(state);
+    }
+
+    private void SendBoardState(BoardStateMessage state)
+    {
         state.owner = IsServer ? "host" : "client";
         string msg = NetMessageFactory.Wrap("board_state", state);
 
@@ -129,15 +188,28 @@ public class MultiplayerManager : MonoBehaviour
         {
             lastMessage = raw;
             if (!NetMessageFactory.TryUnwrap(raw, out var env)) return;
-            if (env.type == "board_state")
+            
+            switch (env.type)
             {
-                var state = JsonUtility.FromJson<BoardStateMessage>(env.payload);
-                if (state.owner == "client")
-                {
-                    EnsureRemoteView();
-                    _remoteView?.ApplyBoardState(state);
-                    DebugOverlay.LastRemoteUpdateTime = Time.time;
-                }
+                case "board_state":
+                    var state = JsonUtility.FromJson<BoardStateMessage>(env.payload);
+                    if (state.owner == "client")
+                    {
+                        EnsureRemoteView();
+                        _remoteView?.ApplyBoardState(state);
+                        DebugOverlay.LastRemoteUpdateTime = Time.time;
+                    }
+                    break;
+                    
+                case "player_action":
+                    var actionData = JsonUtility.FromJson<PlayerActionMessage>(env.payload);
+                    ProcessRemotePlayerAction(actionData.action);
+                    break;
+                    
+                case "handshake":
+                    var handshake = JsonUtility.FromJson<HandshakeMessage>(env.payload);
+                    Debug.Log($"[Server] Handshake received from {handshake.role}");
+                    break;
             }
         });
     }
@@ -148,17 +220,32 @@ public class MultiplayerManager : MonoBehaviour
         {
             lastMessage = raw;
             if (!NetMessageFactory.TryUnwrap(raw, out var env)) return;
-            if (env.type == "board_state")
+            
+            switch (env.type)
             {
-                var state = JsonUtility.FromJson<BoardStateMessage>(env.payload);
-                if (state.owner == "host")
-                {
-                    EnsureRemoteView();
-                    _remoteView?.ApplyBoardState(state);
-                    DebugOverlay.LastRemoteUpdateTime = Time.time;
-                }
+                case "board_state":
+                    var state = JsonUtility.FromJson<BoardStateMessage>(env.payload);
+                    if (state.owner == "host")
+                    {
+                        EnsureRemoteView();
+                        _remoteView?.ApplyBoardState(state);
+                        DebugOverlay.LastRemoteUpdateTime = Time.time;
+                    }
+                    break;
+                    
+                case "player_action":
+                    var actionData = JsonUtility.FromJson<PlayerActionMessage>(env.payload);
+                    ProcessRemotePlayerAction(actionData.action);
+                    break;
             }
         });
+    }
+
+    private void ProcessRemotePlayerAction(string action)
+    {
+        // Process incoming player actions from remote player
+        Debug.Log($"[MultiplayerManager] Remote player action: {action}");
+        // Add your specific action handling here
     }
 
     private void EnsureRemoteView()
@@ -169,12 +256,6 @@ public class MultiplayerManager : MonoBehaviour
             if (_remoteView != null)
                 Debug.Log("[MultiplayerManager] RemoteView encontrado tardíamente.");
         }
-    }
-
-    private void OnDestroy()
-    {
-        if (_server != null) _server.Stop();
-        if (_client != null) _client.Disconnect();
     }
 
     public void LeaveGame()
@@ -193,4 +274,10 @@ public class MultiplayerManager : MonoBehaviour
         Debug.Log("[MultiplayerManager] Juego abandonado.");
     }
 
+    // Public methods for triggering network events from game logic
+    public void NotifyPiecePlaced() => TriggerBoardStateUpdate();
+    public void NotifyPieceMoved() => TriggerBoardStateUpdate();
+    public void NotifyPieceRotated() => TriggerBoardStateUpdate();
+    public void NotifyLinesCleared() => TriggerGameStateUpdate();
+    public void NotifyPlayerAction(string action) => TriggerPlayerAction(action);
 }

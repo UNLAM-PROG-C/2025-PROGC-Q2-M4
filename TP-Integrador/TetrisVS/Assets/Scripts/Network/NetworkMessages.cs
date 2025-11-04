@@ -1,9 +1,14 @@
 using System;
-using UnityEngine;
 
-[Serializable] public class NetworkEnvelope { public string type; public string payload; }
-[Serializable] public class HandshakeMessage { public string role; public string version = "tetris_vs_v1"; }
-[Serializable] public class BoardStateMessage
+[Serializable]
+public class NetworkMessageEnvelope
+{
+    public string type;
+    public string payload;
+}
+
+[Serializable]
+public class BoardStateMessage
 {
     public string owner;
     public int width;
@@ -23,17 +28,53 @@ using UnityEngine;
     public bool gameOver;
 }
 
+[Serializable]
+public class PlayerActionMessage
+{
+    public string action;
+    public string data;
+    public float timestamp;
+}
+
+[Serializable]
+public class GameStateMessage
+{
+    public string state;
+    public int score;
+    public int level;
+    public int lines;
+    public float timestamp;
+}
+
+[Serializable]
+public class HandshakeMessage
+{
+    public string role;
+}
+
 public static class NetMessageFactory
 {
-    public static string Wrap(string type, object obj)
+    public static string Wrap(string type, object payload)
     {
-        var env = new NetworkEnvelope { type = type, payload = JsonUtility.ToJson(obj) };
-        return JsonUtility.ToJson(env) + "\n";
+        var envelope = new NetworkMessageEnvelope
+        {
+            type = type,
+            payload = UnityEngine.JsonUtility.ToJson(payload)
+        };
+        return UnityEngine.JsonUtility.ToJson(envelope) + "\n";
     }
-    public static bool TryUnwrap(string raw, out NetworkEnvelope env)
+
+    public static bool TryUnwrap(string raw, out NetworkMessageEnvelope envelope)
     {
-        env = null;
-        try { env = JsonUtility.FromJson<NetworkEnvelope>(raw); return env != null; }
-        catch { return false; }
+        envelope = null;
+        try
+        {
+            envelope = UnityEngine.JsonUtility.FromJson<NetworkMessageEnvelope>(raw.Trim());
+            return envelope != null && !string.IsNullOrEmpty(envelope.type);
+        }
+        catch
+        {
+            return false;
+        }
     }
 }

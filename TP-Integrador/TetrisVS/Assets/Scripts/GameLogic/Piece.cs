@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using UnityEngine.SceneManagement;
 
 public class Piece : MonoBehaviour
@@ -111,6 +111,9 @@ public class Piece : MonoBehaviour
         {
             board.Set(this);
             lockTime = 0f;
+            
+            // Trigger network update for piece movement
+            MultiplayerManager.Instance?.NotifyPieceMoved();
         }
         else
         {
@@ -137,6 +140,9 @@ public class Piece : MonoBehaviour
 
     private void Lock()
     {
+        // Trigger network update for piece placement
+        MultiplayerManager.Instance?.NotifyPiecePlaced();
+        
         board.ClearLines();
         board.SpawnPiece();
     }
@@ -203,10 +209,12 @@ public class Piece : MonoBehaviour
         {
             // Successful rotation resets lock timer to give player time.
             lockTime = 0f;
+            
+            // Trigger network update for piece rotation
+            MultiplayerManager.Instance?.NotifyPieceRotated();
         }
 
         board.Set(this);
-        board.multiplayerManager?.ForceImmediateSend();
     }
 
     private void RotateCells(int direction)
