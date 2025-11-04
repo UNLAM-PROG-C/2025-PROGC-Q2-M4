@@ -36,6 +36,14 @@ public class QueueSyncMessage
 }
 
 [Serializable]
+public class GameStateUpdateMessage
+{
+    public string gameState;
+    public int connectedClients;
+    public float timestamp;
+}
+
+[Serializable]
 public class PlayerActionMessage
 {
     public string action;

@@ -647,6 +647,10 @@ MonoBehaviour:
   spawnPos: {x: -1, y: 8, z: 0}
   boardBoundsSize: {x: 10, y: 20}
   multiplayerManager: {fileID: 557245965}
+  score: 0
+  linesCleared: 0
+  level: 1
+  gameOver: 0
 --- !u!156049354 &329705364
 Grid:
   m_ObjectHideFlags: 0
@@ -783,6 +787,10 @@ MonoBehaviour:
   spawnPos: {x: -1, y: 8, z: 0}
   boardBoundsSize: {x: 10, y: 20}
   multiplayerManager: {fileID: 557245965}
+  score: 0
+  linesCleared: 0
+  level: 1
+  gameOver: 0
 --- !u!114 &354898003
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -834,8 +842,11 @@ MonoBehaviour:
   defaultPort: 7777
   autoImmediateSnapshotOnConnect: 1
   minSendInterval: 0.05
+  currentGameState: 0
+  requireClientToStart: 1
   currentRole: 0
   lastMessage: 
+  connectedClients: 0
 --- !u!4 &557245966
 Transform:
   m_ObjectHideFlags: 0

@@ -15,7 +15,7 @@ public class Piece : MonoBehaviour
 
     private float stepTime;
     private float lockTime;
-        
+
     void Awake()
     {
         if (cells == null || cells.Length != 4)
@@ -28,6 +28,8 @@ public class Piece : MonoBehaviour
         int difficulty = PlayerPrefs.GetInt("DifficultyLevel", 2);
         stepDelay = stepDelay / Mathf.Max(1, difficulty - 1);
         lockDelay = lockDelay / Mathf.Max(1, difficulty - 1);
+
+        Debug.Log($"[Piece] Awake - stepDelay: {stepDelay}, lockDelay: {lockDelay}");
     }
 
     public void Initialize(Board board, Vector3Int spawnPos, TetrisBlockShapeData data)
@@ -44,14 +46,51 @@ public class Piece : MonoBehaviour
         stepTime = Time.time + stepDelay;
         lockTime = 0f;
         rotationIndex = 0;
+
+        Debug.Log($"[Piece] Initialized at position {spawnPos} with shape {data.Shape}");
     }
 
     void Update()
     {
-        if (board.gameOver) return;
+        // Check if we can update
+        if (!CanUpdate())
+        {
+            return;
+        }
 
         HandleInputLocal();
         HandleGravity();
+    }
+
+    private bool CanUpdate()
+    {
+        // Don't update if game is over
+        if (board != null && board.gameOver)
+        {
+            return false;
+        }
+
+        // Check multiplayer state
+        if (MultiplayerManager.Instance != null)
+        {
+            // If multiplayer manager exists but game isn't initialized, wait
+            if (!MultiplayerManager.Instance.IsGameInitialized)
+            {
+                return false;
+            }
+
+            // Check if we can start the game
+            bool canPlay = MultiplayerManager.Instance.CanStartGame ||
+                          MultiplayerManager.Instance.currentGameState == GameState.Ready ||
+                          MultiplayerManager.Instance.currentRole == MultiplayerRole.None; // Single player
+
+            if (!canPlay)
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private void HandleInputLocal()
@@ -87,8 +126,21 @@ public class Piece : MonoBehaviour
         }
         else if (Input.GetKeyDown(KeyCode.R))
         {
-            // Restart game
-            board.RestartGame();
+            // Restart game (only if host or single player)
+            if (MultiplayerManager.Instance == null || MultiplayerManager.Instance.IsServer)
+            {
+                board.RestartGame();
+            }
+        }
+        else if (Input.GetKeyDown(KeyCode.F))
+        {
+            // Debug: Force start game (only in editor)
+#if UNITY_EDITOR
+            if (MultiplayerManager.Instance != null)
+            {
+                MultiplayerManager.Instance.ForceStartGame();
+            }
+#endif
         }
     }
 
@@ -114,7 +166,7 @@ public class Piece : MonoBehaviour
         {
             board.Set(this);
             lockTime = 0f;
-            
+
             // Trigger network update for piece movement
             MultiplayerManager.Instance?.NotifyPieceMoved();
         }
@@ -145,16 +197,16 @@ public class Piece : MonoBehaviour
     {
         // Clear the piece from tilemap before checking lines
         board.Clear(this);
-        
+
         // Set the piece permanently on the board
         board.Set(this);
-        
+
         // Trigger network update for piece placement
         MultiplayerManager.Instance?.NotifyPiecePlaced();
-        
+
         // Clear completed lines
         board.ClearLines();
-        
+
         // Spawn the next piece
         board.SpawnPiece();
     }
@@ -162,20 +214,20 @@ public class Piece : MonoBehaviour
     private void RotatePiece(int direction)
     {
         board.Clear(this);
-        
+
         int originalRotation = rotationIndex;
         rotationIndex = Wrap(rotationIndex + direction, 0, 4);
-        
+
         ApplyRotationMatrix(direction);
-        
+
         if (!TestWallKicks(rotationIndex, direction))
         {
             rotationIndex = originalRotation;
             ApplyRotationMatrix(-direction);
         }
-        
+
         board.Set(this);
-        
+
         // Trigger network update for piece rotation
         MultiplayerManager.Instance?.NotifyPieceRotated();
     }
@@ -183,13 +235,13 @@ public class Piece : MonoBehaviour
     private void ApplyRotationMatrix(int direction)
     {
         float[] matrix = Data.RotationMatrix;
-        
+
         for (int i = 0; i < cells.Length; i++)
         {
             Vector3 cell = cells[i];
-            
+
             int x, y;
-            
+
             switch (TBSData.Shape)
             {
                 case eTetrisBlockShapes.I:
@@ -199,13 +251,13 @@ public class Piece : MonoBehaviour
                     x = Mathf.CeilToInt((cell.x * matrix[0] * direction) + (cell.y * matrix[1] * direction));
                     y = Mathf.CeilToInt((cell.x * matrix[2] * direction) + (cell.y * matrix[3] * direction));
                     break;
-                
+
                 default:
                     x = Mathf.RoundToInt((cell.x * matrix[0] * direction) + (cell.y * matrix[1] * direction));
                     y = Mathf.RoundToInt((cell.x * matrix[2] * direction) + (cell.y * matrix[3] * direction));
                     break;
             }
-            
+
             cells[i] = new Vector3Int(x, y, 0);
         }
     }
@@ -213,30 +265,30 @@ public class Piece : MonoBehaviour
     private bool TestWallKicks(int rotationIndex, int rotationDirection)
     {
         int wallKickIndex = GetWallKickIndex(rotationIndex, rotationDirection);
-        
+
         for (int i = 0; i < 5; i++)
         {
             Vector2Int translation = GetWallKick(wallKickIndex, i);
-            
+
             if (board.IsValidPosition(this, position + (Vector3Int)translation))
             {
                 position += (Vector3Int)translation;
                 return true;
             }
         }
-        
+
         return false;
     }
 
     private int GetWallKickIndex(int rotationIndex, int rotationDirection)
     {
         int wallKickIndex = rotationIndex * 2;
-        
+
         if (rotationDirection < 0)
         {
             wallKickIndex--;
         }
-        
+
         return Wrap(wallKickIndex, 0, 8);
     }
 
