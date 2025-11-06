@@ -6,12 +6,12 @@ using UnityEngine.Tilemaps;
 [RequireComponent(typeof(Board))]
 public class BoardMultiplayerAdapter : MonoBehaviour
 {
-    // Events for triggering network updates
     public event System.Action OnPiecePlaced;
     public event System.Action OnPieceRotated;
     public event System.Action OnPieceMoved;
     public event System.Action<int> OnLinesCleared;
     public event System.Action OnGameStateChanged;
+    public event System.Action<int> OnGarbageReceived; // NEW
 
     public Board board;
     public int queuePreviewCount = 5;
@@ -29,22 +29,12 @@ public class BoardMultiplayerAdapter : MonoBehaviour
     private void Start()
     {
         MultiplayerManager.Instance?.RegisterLocalAdapter(this);
-
-        // Subscribe to board events if they exist
         SubscribeToGameEvents();
     }
 
     private void SubscribeToGameEvents()
     {
-        // Subscribe to board events - you'll need to add these events to your Board class
-        // For now, we'll provide methods that can be called manually from your game logic
-
-        // Example of how you could hook into existing board events:
-        // if (board != null)
-        // {
-        //     board.OnLineClear += (lines) => OnLinesCleared?.Invoke(lines);
-        //     board.OnPieceLocked += () => OnPiecePlaced?.Invoke();
-        // }
+        // Extend as needed
     }
 
     private void BuildLookup()
@@ -102,7 +92,7 @@ public class BoardMultiplayerAdapter : MonoBehaviour
         int qLen = queuePreviewCount;
         int[] upcoming = new int[qLen];
         for (int i = 0; i < qLen; i++)
-            upcoming[i] = board.shapesQueue.PeekShape(i); // Fixed: Changed from peekShape to PeekShape
+            upcoming[i] = board.shapesQueue.PeekShape(i);
 
         return new BoardStateMessage
         {
@@ -124,7 +114,6 @@ public class BoardMultiplayerAdapter : MonoBehaviour
         };
     }
 
-    // Public methods that can be called from game logic
     public void NotifyPiecePlaced()
     {
         OnPiecePlaced?.Invoke();
@@ -146,22 +135,27 @@ public class BoardMultiplayerAdapter : MonoBehaviour
     public void NotifyLinesCleared(int count)
     {
         OnLinesCleared?.Invoke(count);
-        MultiplayerManager.Instance?.NotifyLinesCleared(count); // Fixed: Added count parameter
+        MultiplayerManager.Instance?.NotifyLinesCleared(count);
         Debug.Log($"[BoardMultiplayerAdapter] Lines cleared notification: {count}");
     }
 
     public void NotifyGameStateChanged()
     {
         OnGameStateChanged?.Invoke();
-        // Removed NotifyPlayerAction call as it doesn't exist in MultiplayerManager
         Debug.Log("[BoardMultiplayerAdapter] Game state changed notification");
     }
 
-    // Method to apply remote board state (for viewing opponent's board)
+    // NEW: Apply incoming garbage lines
+    public void ApplyIncomingGarbage(int count)
+    {
+        if (count <= 0) return;
+        board.EnqueueGarbage(count);
+        OnGarbageReceived?.Invoke(count);
+        Debug.Log($"[BoardMultiplayerAdapter] Received {count} garbage lines");
+    }
+
     public void ApplyRemoteBoardState(BoardStateMessage state)
     {
-        // This would be used if you want to apply remote state to local board
-        // Usually this is handled by RemoteBoardView instead
         Debug.Log($"[BoardMultiplayerAdapter] Received remote board state from {state.owner}");
     }
 }

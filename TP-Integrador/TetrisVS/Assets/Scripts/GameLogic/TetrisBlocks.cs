@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.Tilemaps;
 
-public enum eTetrisBlockShapes 
+public enum eTetrisBlockShapes
 {
     I,
     O,
@@ -18,7 +18,7 @@ public struct TetrisBlockShapeData
     public eTetrisBlockShapes Shape;
     public Tile tile;
 
-    public Vector2Int[] cells { get; private set; } //hack for Serializable to not show up in unity
+    public Vector2Int[] cells { get; private set; }
 
     public void Initialize()
     {

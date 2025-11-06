@@ -18,7 +18,6 @@ public class GhostPiece : MonoBehaviour
 
     private void LateUpdate()
     {
-        // Validate all required components before proceeding
         if (!IsValidForUpdate())
         {
             return;
@@ -32,43 +31,13 @@ public class GhostPiece : MonoBehaviour
 
     private bool IsValidForUpdate()
     {
-        // Check if all required components are properly initialized
-        if (this.tilemap == null)
-        {
-            Debug.LogWarning("GhostPiece: Tilemap is null");
-            return false;
-        }
-
-        if (this.board == null)
-        {
-            Debug.LogWarning("GhostPiece: Board is null");
-            return false;
-        }
-
-        if (this.trackedPiece == null)
-        {
-            Debug.LogWarning("GhostPiece: TrackedPiece is null");
-            return false;
-        }
-
-        if (this.trackedPiece.cells == null)
-        {
-            Debug.LogWarning("GhostPiece: TrackedPiece.cells is null");
-            return false;
-        }
-
-        if (this.cells == null)
-        {
-            Debug.LogWarning("GhostPiece: cells array is null");
-            return false;
-        }
-
-        if (this.tile == null)
-        {
-            Debug.LogWarning("GhostPiece: Tile is null");
-            return false;
-        }
-
+        if (this.tilemap == null) return false;
+        if (this.board == null) return false;
+        if (this.trackedPiece == null) return false;
+        if (this.trackedPiece.cells == null) return false;
+        if (this.cells == null) return false;
+        if (this.tile == null) return false;
+        if (board.gameOver) return false;
         return true;
     }
 
@@ -85,19 +54,9 @@ public class GhostPiece : MonoBehaviour
 
     private void Copy()
     {
-        // Validate before copying
-        if (this.trackedPiece == null || this.trackedPiece.cells == null || this.cells == null)
-        {
-            Debug.LogError("GhostPiece: Cannot copy - trackedPiece or cells is null");
-            return;
-        }
+        if (this.trackedPiece == null || this.trackedPiece.cells == null || this.cells == null) return;
 
-        // Ensure arrays have the same length
-        if (this.trackedPiece.cells.Length != this.cells.Length)
-        {
-            Debug.LogError($"GhostPiece: Array length mismatch - trackedPiece.cells.Length: {this.trackedPiece.cells.Length}, cells.Length: {this.cells.Length}");
-            return;
-        }
+        if (this.trackedPiece.cells.Length != this.cells.Length) return;
 
         for (int i = 0; i < this.cells.Length; i++)
         {
@@ -114,7 +73,7 @@ public class GhostPiece : MonoBehaviour
         int current = position.y;
         int bottom = -this.board.boardBoundsSize.y / 2 - 1;
 
-        this.board.Clear(this.trackedPiece); // Clear the tracked piece from the board to avoid collision with itself
+        this.board.Clear(this.trackedPiece);
 
         for (int row = current; row >= bottom; row--)
         {
@@ -144,26 +103,24 @@ public class GhostPiece : MonoBehaviour
         }
     }
 
-    // Public method to initialize the ghost piece (useful for multiplayer scenarios)
     public void Initialize(Board gameBoard, Piece pieceToTrack, Tile ghostTile)
     {
         this.board = gameBoard;
         this.trackedPiece = pieceToTrack;
         this.tile = ghostTile;
-        
+
         if (this.cells == null)
         {
             this.cells = new Vector3Int[4];
         }
     }
 
-    // Method to check if the ghost piece is properly configured
     public bool IsProperlyConfigured()
     {
-        return this.board != null && 
-               this.trackedPiece != null && 
-               this.tile != null && 
-               this.tilemap != null && 
+        return this.board != null &&
+               this.trackedPiece != null &&
+               this.tile != null &&
+               this.tilemap != null &&
                this.cells != null;
     }
 }

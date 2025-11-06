@@ -9,7 +9,7 @@ public class Board : MonoBehaviour
     public Piece activePiece { get; private set; }
     public Vector3Int spawnPos;
     public Vector2Int boardBoundsSize = new Vector2Int(10, 20);
-    public SharedShapesQueue shapesQueue; // Changed to SharedShapesQueue
+    public SharedShapesQueue shapesQueue; // Shared queue
     public MultiplayerManager multiplayerManager;
 
     // Game state tracking
@@ -17,6 +17,11 @@ public class Board : MonoBehaviour
     public int linesCleared = 0;
     public int level = 1;
     public bool gameOver = false;
+
+    // Garbage system
+    private int pendingGarbageLines = 0;
+    private System.Random garbageRng = new System.Random();
+    public int maxGarbageApplyPerLock = 8; // safety cap to avoid extreme spikes
 
     public RectInt Bounds
     {
@@ -52,7 +57,7 @@ public class Board : MonoBehaviour
                 Debug.LogError($"TetrisBlocks[{i}].tile is NULL!");
             }
         }
-        
+
         // Initialize queue - will be overridden by multiplayer manager if needed
         if (shapesQueue == null)
         {
@@ -92,7 +97,7 @@ public class Board : MonoBehaviour
         {
             Debug.LogError($"Invalid shape index: {shapeIndex}, TetrisBlocks.Length: {TetrisBlocks.Length}");
             shapeIndex = 0;
-            
+
             if (shapeIndex >= TetrisBlocks.Length)
             {
                 Debug.LogError("Board: Cannot spawn piece - no valid shapes available!");
@@ -118,15 +123,15 @@ public class Board : MonoBehaviour
         {
             GameOver();
         }
-        
+
         // Notify multiplayer manager of queue change
         if (MultiplayerManager.Instance != null && MultiplayerManager.Instance.IsServer)
         {
             MultiplayerManager.Instance.BroadcastQueueUpdate();
         }
     }
-    
-    // Method to synchronize queue from server
+
+    // Synchronize queue from server
     public void SynchronizeQueue(QueueStateMessage queueState)
     {
         if (shapesQueue == null)
@@ -205,7 +210,7 @@ public class Board : MonoBehaviour
 
             Debug.Log($"Cleared {clearedLines} lines. Total: {linesCleared}");
 
-            // Notify multiplayer manager
+            // Notify multiplayer manager (will trigger garbage sending)
             var adapter = GetComponent<BoardMultiplayerAdapter>();
             if (adapter != null)
             {
@@ -216,21 +221,19 @@ public class Board : MonoBehaviour
 
     private void UpdateScore(int lines)
     {
-        // Standard Tetris scoring
         int baseScore = 0;
         switch (lines)
         {
-            case 1: baseScore = 40; break;   // Single
-            case 2: baseScore = 100; break;  // Double  
-            case 3: baseScore = 300; break;  // Triple
-            case 4: baseScore = 1200; break; // Tetris
+            case 1: baseScore = 40; break;
+            case 2: baseScore = 100; break;
+            case 3: baseScore = 300; break;
+            case 4: baseScore = 1200; break;
         }
         score += baseScore * level;
     }
 
     private void UpdateLevel()
     {
-        // Level up every 10 lines
         int newLevel = (linesCleared / 10) + 1;
         if (newLevel > level)
         {
@@ -285,44 +288,118 @@ public class Board : MonoBehaviour
 
     private void GameOver()
     {
+        if (gameOver) return;
+
         gameOver = true;
         Debug.Log("Game Over!");
-        
-        // Stop the active piece
+
         if (activePiece != null)
         {
             activePiece.enabled = false;
         }
 
+        // Could send a game over message via multiplayer manager if desired
         SceneManager.LoadScene(0);
     }
 
     public void RestartGame()
     {
-        // Clear the board
         tilemap.ClearAllTiles();
-        
-        // Reset game state
+
         gameOver = false;
         score = 0;
         linesCleared = 0;
         level = 1;
-        
-        // Reinitialize queue
+        pendingGarbageLines = 0;
+
         if (MultiplayerManager.Instance == null || MultiplayerManager.Instance.IsServer)
         {
             shapesQueue = new SharedShapesQueue();
         }
-        
-        // Re-enable active piece
+
         if (activePiece != null)
         {
             activePiece.enabled = true;
         }
-        
-        // Spawn new piece
+
         SpawnPiece();
-        
+
         Debug.Log("Game restarted!");
+    }
+
+    // --- Garbage System Public Interface ---
+
+    public void EnqueueGarbage(int count)
+    {
+        if (count <= 0 || gameOver) return;
+        pendingGarbageLines += count;
+        Debug.Log($"[Board] Enqueued {count} garbage lines (total pending: {pendingGarbageLines})");
+    }
+
+    public void ApplyPendingGarbage()
+    {
+        if (pendingGarbageLines <= 0 || gameOver) return;
+
+        int applyCount = Mathf.Min(pendingGarbageLines, maxGarbageApplyPerLock);
+        pendingGarbageLines -= applyCount;
+
+        ApplyGarbageLines(applyCount);
+    }
+
+    private void ApplyGarbageLines(int count)
+    {
+        if (count <= 0) return;
+
+        RectInt bounds = Bounds;
+
+        // Shift existing tiles UP
+        for (int y = bounds.yMax - 1; y >= bounds.yMin; y--)
+        {
+            for (int x = bounds.xMin; x < bounds.xMax; x++)
+            {
+                Vector3Int fromPos = new Vector3Int(x, y, 0);
+                TileBase tile = tilemap.GetTile(fromPos);
+                if (tile != null)
+                {
+                    Vector3Int toPos = new Vector3Int(x, y + count, 0);
+                    if (toPos.y >= bounds.yMax)
+                    {
+                        // Top-out
+                        Debug.Log("[Board] Garbage caused top-out");
+                        GameOver();
+                        return;
+                    }
+                    tilemap.SetTile(toPos, tile);
+                }
+            }
+        }
+
+        // Clear old positions that were shifted (avoid duplication)
+        for (int y = bounds.yMin; y < bounds.yMin + count; y++)
+        {
+            for (int x = bounds.xMin; x < bounds.xMax; x++)
+            {
+                tilemap.SetTile(new Vector3Int(x, y, 0), null);
+            }
+        }
+
+        // Create garbage rows at bottom
+        for (int g = 0; g < count; g++)
+        {
+            int holeColumn = garbageRng.Next(bounds.xMin, bounds.xMax);
+            for (int x = bounds.xMin; x < bounds.xMax; x++)
+            {
+                if (x == holeColumn) continue;
+
+                // Use a neutral tile: pick first tile or any
+                TileBase garbageTile = TetrisBlocks.Length > 0 ? TetrisBlocks[0].tile : null;
+                if (garbageTile != null)
+                {
+                    tilemap.SetTile(new Vector3Int(x, bounds.yMin + g, 0), garbageTile);
+                }
+            }
+        }
+
+        Debug.Log($"[Board] Applied {count} garbage lines. Remaining pending: {pendingGarbageLines}");
     }
 }

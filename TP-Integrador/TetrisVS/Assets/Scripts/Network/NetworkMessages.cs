@@ -67,6 +67,13 @@ public class HandshakeMessage
     public string role;
 }
 
+// NEW garbage message
+[Serializable]
+public class GarbageMessage
+{
+    public int count;
+}
+
 public static class NetMessageFactory
 {
     public static string Wrap(string type, object payload)

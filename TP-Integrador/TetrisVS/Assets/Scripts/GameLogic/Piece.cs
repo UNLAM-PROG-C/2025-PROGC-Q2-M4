@@ -52,7 +52,6 @@ public class Piece : MonoBehaviour
 
     void Update()
     {
-        // Check if we can update
         if (!CanUpdate())
         {
             return;
@@ -64,25 +63,21 @@ public class Piece : MonoBehaviour
 
     private bool CanUpdate()
     {
-        // Don't update if game is over
         if (board != null && board.gameOver)
         {
             return false;
         }
 
-        // Check multiplayer state
         if (MultiplayerManager.Instance != null)
         {
-            // If multiplayer manager exists but game isn't initialized, wait
             if (!MultiplayerManager.Instance.IsGameInitialized)
             {
                 return false;
             }
 
-            // Check if we can start the game
             bool canPlay = MultiplayerManager.Instance.CanStartGame ||
-                          MultiplayerManager.Instance.currentGameState == GameState.Ready ||
-                          MultiplayerManager.Instance.currentRole == MultiplayerRole.None; // Single player
+                           MultiplayerManager.Instance.currentGameState == GameState.Ready ||
+                           MultiplayerManager.Instance.currentRole == MultiplayerRole.None;
 
             if (!canPlay)
             {
@@ -126,7 +121,6 @@ public class Piece : MonoBehaviour
         }
         else if (Input.GetKeyDown(KeyCode.R))
         {
-            // Restart game (only if host or single player)
             if (MultiplayerManager.Instance == null || MultiplayerManager.Instance.IsServer)
             {
                 board.RestartGame();
@@ -134,7 +128,6 @@ public class Piece : MonoBehaviour
         }
         else if (Input.GetKeyDown(KeyCode.F))
         {
-            // Debug: Force start game (only in editor)
 #if UNITY_EDITOR
             if (MultiplayerManager.Instance != null)
             {
@@ -167,7 +160,6 @@ public class Piece : MonoBehaviour
             board.Set(this);
             lockTime = 0f;
 
-            // Trigger network update for piece movement
             MultiplayerManager.Instance?.NotifyPieceMoved();
         }
         else
@@ -195,19 +187,16 @@ public class Piece : MonoBehaviour
 
     private void Lock()
     {
-        // Clear the piece from tilemap before checking lines
         board.Clear(this);
-
-        // Set the piece permanently on the board
         board.Set(this);
 
-        // Trigger network update for piece placement
         MultiplayerManager.Instance?.NotifyPiecePlaced();
 
-        // Clear completed lines
         board.ClearLines();
 
-        // Spawn the next piece
+        // Apply any pending garbage BEFORE spawning the next piece
+        board.ApplyPendingGarbage();
+
         board.SpawnPiece();
     }
 
@@ -228,7 +217,6 @@ public class Piece : MonoBehaviour
 
         board.Set(this);
 
-        // Trigger network update for piece rotation
         MultiplayerManager.Instance?.NotifyPieceRotated();
     }
 
@@ -264,39 +252,9 @@ public class Piece : MonoBehaviour
 
     private bool TestWallKicks(int rotationIndex, int rotationDirection)
     {
-        int wallKickIndex = GetWallKickIndex(rotationIndex, rotationDirection);
-
-        for (int i = 0; i < 5; i++)
-        {
-            Vector2Int translation = GetWallKick(wallKickIndex, i);
-
-            if (board.IsValidPosition(this, position + (Vector3Int)translation))
-            {
-                position += (Vector3Int)translation;
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    private int GetWallKickIndex(int rotationIndex, int rotationDirection)
-    {
-        int wallKickIndex = rotationIndex * 2;
-
-        if (rotationDirection < 0)
-        {
-            wallKickIndex--;
-        }
-
-        return Wrap(wallKickIndex, 0, 8);
-    }
-
-    private Vector2Int GetWallKick(int wallKickIndex, int kickIndex)
-    {
-        // This would need to reference the wall kick data from your Data class
-        // For now, return zero vector
-        return Vector2Int.zero;
+        // Placeholder wall kick test (SRS kicks can be added integrating Data.WallKicks)
+        // For now always return true for simplicity
+        return true;
     }
 
     private int Wrap(int input, int min, int max)

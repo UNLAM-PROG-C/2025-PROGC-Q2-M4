@@ -12,7 +12,7 @@ public class MultiplayerManager : MonoBehaviour
     public bool autoImmediateSnapshotOnConnect = true;
 
     [Header("Network Throttling")]
-    public float minSendInterval = 0.05f; // Minimum time between sends (20fps max)
+    public float minSendInterval = 0.05f;
 
     [Header("Game State")]
     public GameState currentGameState = GameState.WaitingForPlayers;
@@ -29,7 +29,7 @@ public class MultiplayerManager : MonoBehaviour
     private float _lastSendTime;
     private bool _gameInitialized = false;
 
-    // Event-based networking events
+    // Events
     public static event System.Action<BoardStateMessage> OnBoardStateChanged;
     public static event System.Action<string> OnPlayerAction;
     public static event System.Action OnGameStateChanged;
@@ -53,7 +53,6 @@ public class MultiplayerManager : MonoBehaviour
         Application.runInBackground = true;
         Debug.Log("[MultiplayerManager] Awake");
 
-        // Subscribe to network events
         OnBoardStateChanged += HandleBoardStateChanged;
         OnPlayerAction += HandlePlayerAction;
         OnGameStateChanged += HandleGameStateChanged;
@@ -61,13 +60,11 @@ public class MultiplayerManager : MonoBehaviour
 
     private void Start()
     {
-        // Don't pause immediately - wait for proper initialization
         Debug.Log($"[MultiplayerManager] Start - Role: {currentRole}, RequireClient: {requireClientToStart}");
     }
 
     private void OnDestroy()
     {
-        // Unsubscribe from events
         OnBoardStateChanged -= HandleBoardStateChanged;
         OnPlayerAction -= HandlePlayerAction;
         OnGameStateChanged -= HandleGameStateChanged;
@@ -80,18 +77,16 @@ public class MultiplayerManager : MonoBehaviour
     {
         _localAdapter = adapter;
 
-        // Subscribe to adapter events for immediate network updates
         if (_localAdapter != null)
         {
-            _localAdapter.OnPiecePlaced += () => TriggerBoardStateUpdate(true); // Force immediate for piece placement
+            _localAdapter.OnPiecePlaced += () => TriggerBoardStateUpdate(true);
             _localAdapter.OnLinesCleared += (lines) => TriggerGameStateUpdate();
-            _localAdapter.OnPieceRotated += () => TriggerBoardStateUpdate(false); // Throttled for rotation
-            _localAdapter.OnPieceMoved += () => TriggerBoardStateUpdate(false); // Throttled for movement
+            _localAdapter.OnPieceRotated += () => TriggerBoardStateUpdate(false);
+            _localAdapter.OnPieceMoved += () => TriggerBoardStateUpdate(false);
+            _localAdapter.OnGarbageReceived += (g) => TriggerBoardStateUpdate(true);
         }
 
         Debug.Log("[MultiplayerManager] LocalAdapter registered.");
-
-        // Initialize game state now that adapter is ready
         InitializeGameState();
     }
 
@@ -141,12 +136,10 @@ public class MultiplayerManager : MonoBehaviour
         _server.OnClientDisconnected += OnServerClientDisconnected;
         _server.Start();
 
-        // Initialize server queue
         InitializeServerQueue();
 
         Debug.Log("[MultiplayerManager] Host started");
 
-        // If game is already initialized, check if we should wait
         if (_gameInitialized)
         {
             InitializeGameState();
@@ -168,7 +161,6 @@ public class MultiplayerManager : MonoBehaviour
 
         Debug.Log("[MultiplayerManager] Attempting to connect to " + ip);
 
-        // Client can start immediately (will be synced by server)
         if (_gameInitialized)
         {
             UpdateGameState(GameState.Playing);
@@ -193,7 +185,6 @@ public class MultiplayerManager : MonoBehaviour
                 StartGame();
             }
 
-            // Send initial data to new client
             SendImmediateBoardState();
             BroadcastQueueUpdate();
         });
@@ -239,7 +230,6 @@ public class MultiplayerManager : MonoBehaviour
         Debug.Log("[MultiplayerManager] Game left.");
     }
 
-    // Game State Management
     private void UpdateGameState(GameState newState)
     {
         if (currentGameState != newState)
@@ -249,7 +239,6 @@ public class MultiplayerManager : MonoBehaviour
             OnGameStateUpdated?.Invoke(newState);
             Debug.Log($"[MultiplayerManager] Game state changed from {oldState} to {newState}");
 
-            // Broadcast state change to clients
             if (IsServer)
             {
                 BroadcastGameState();
@@ -266,10 +255,8 @@ public class MultiplayerManager : MonoBehaviour
 
     private void PauseGame()
     {
-        // Don't use Time.timeScale as it affects everything
         Debug.Log("[MultiplayerManager] Game paused - waiting for players");
 
-        // Disable piece movement
         var pieces = FindObjectsOfType<Piece>();
         foreach (var piece in pieces)
         {
@@ -285,7 +272,6 @@ public class MultiplayerManager : MonoBehaviour
     {
         Debug.Log("[MultiplayerManager] Game resumed");
 
-        // Enable piece movement
         var pieces = FindObjectsOfType<Piece>();
         foreach (var piece in pieces)
         {
@@ -312,12 +298,11 @@ public class MultiplayerManager : MonoBehaviour
         Debug.Log($"[Server] Broadcasting game state: {currentGameState}");
     }
 
-    // Queue synchronization methods
+    // Queue synchronization
     private void InitializeServerQueue()
     {
         if (_localAdapter?.board != null)
         {
-            // Server initializes with a new random seed
             _localAdapter.board.shapesQueue = new SharedShapesQueue();
             Debug.Log($"[Server] Queue initialized with seed: {_localAdapter.board.shapesQueue.Seed}");
         }
@@ -345,7 +330,6 @@ public class MultiplayerManager : MonoBehaviour
             _localAdapter.board.shapesQueue = new SharedShapesQueue(serverSeed);
             Debug.Log($"[Client] Queue synchronized with server seed: {serverSeed}");
 
-            // Also update queue renderer if it exists
             var queueRenderer = FindObjectOfType<QueueRenderer>();
             if (queueRenderer != null)
             {
@@ -368,7 +352,6 @@ public class MultiplayerManager : MonoBehaviour
                     if (handshake.role == "client")
                     {
                         Debug.Log("[Server] Client handshake received, sending initial data");
-                        // Send initial queue state and game state to new client
                         BroadcastQueueUpdate();
                         BroadcastGameState();
                     }
@@ -387,6 +370,16 @@ public class MultiplayerManager : MonoBehaviour
 
                 case "game_state":
                     OnGameStateChanged?.Invoke();
+                    break;
+
+                case "garbage":
+                    var garbageMsgS = JsonUtility.FromJson<GarbageMessage>(envelope.payload);
+                    Debug.Log($"[Server] Received garbage request: {garbageMsgS.count}");
+                    // Apply to local host board
+                    _localAdapter?.ApplyIncomingGarbage(garbageMsgS.count);
+                    // Forward to all clients
+                    var forward = NetMessageFactory.Wrap("garbage", garbageMsgS);
+                    _server?.Broadcast(forward);
                     break;
             }
         });
@@ -412,7 +405,6 @@ public class MultiplayerManager : MonoBehaviour
                     };
                     _localAdapter?.board?.SynchronizeQueue(queueState);
 
-                    // Update queue renderer
                     var queueRenderer = FindObjectOfType<QueueRenderer>();
                     if (queueRenderer != null)
                     {
@@ -429,7 +421,6 @@ public class MultiplayerManager : MonoBehaviour
                         currentGameState = newState;
                         OnGameStateUpdated?.Invoke(newState);
 
-                        // Handle game state changes on client
                         if (newState == GameState.Playing)
                         {
                             ResumeGame();
@@ -455,11 +446,16 @@ public class MultiplayerManager : MonoBehaviour
                 case "game_state":
                     OnGameStateChanged?.Invoke();
                     break;
+
+                case "garbage":
+                    var garbageMsgC = JsonUtility.FromJson<GarbageMessage>(envelope.payload);
+                    Debug.Log($"[Client] Received garbage lines: {garbageMsgC.count}");
+                    _localAdapter?.ApplyIncomingGarbage(garbageMsgC.count);
+                    break;
             }
         });
     }
 
-    // Event handlers
     private void HandleBoardStateChanged(BoardStateMessage state)
     {
         Debug.Log($"[MultiplayerManager] Board state changed for {state.owner}");
@@ -475,7 +471,6 @@ public class MultiplayerManager : MonoBehaviour
         Debug.Log("[MultiplayerManager] Game state changed");
     }
 
-    // Network update methods
     public void TriggerBoardStateUpdate(bool forceImmediate = false)
     {
         if (currentGameState != GameState.Playing) return;
@@ -512,7 +507,6 @@ public class MultiplayerManager : MonoBehaviour
         else if (IsClient) _client?.Send(msg);
     }
 
-    // Notification methods for game events
     public void NotifyPiecePlaced()
     {
         if (currentGameState != GameState.Playing) return;
@@ -520,7 +514,7 @@ public class MultiplayerManager : MonoBehaviour
         TriggerBoardStateUpdate(true);
         if (IsServer)
         {
-            BroadcastQueueUpdate(); // Update queue when piece is placed
+            BroadcastQueueUpdate();
         }
     }
 
@@ -539,11 +533,46 @@ public class MultiplayerManager : MonoBehaviour
     public void NotifyLinesCleared(int count)
     {
         if (currentGameState != GameState.Playing) return;
+
         TriggerGameStateUpdate();
         TriggerBoardStateUpdate(true);
+
+        int garbageToSend = ComputeGarbageToSend(count);
+        if (garbageToSend > 0)
+        {
+            SendGarbageToOpponent(garbageToSend);
+        }
     }
 
-    // Debug method to force start game (for testing)
+    private int ComputeGarbageToSend(int linesCleared)
+    {
+        // Simple standard mapping
+        switch (linesCleared)
+        {
+            case 2: return 1;
+            case 3: return 2;
+            case 4: return 4;
+            default: return 0;
+        }
+    }
+
+    private void SendGarbageToOpponent(int count)
+    {
+        var msg = NetMessageFactory.Wrap("garbage", new GarbageMessage { count = count });
+
+        if (IsServer)
+        {
+            // Apply to host only when receiving from client, not when sending
+            _server?.Broadcast(msg);
+            Debug.Log($"[Server] Sent garbage {count} to clients");
+        }
+        else if (IsClient)
+        {
+            _client?.Send(msg);
+            Debug.Log($"[Client] Sent garbage {count} request to server");
+        }
+    }
+
     [System.Diagnostics.Conditional("UNITY_EDITOR")]
     public void ForceStartGame()
     {

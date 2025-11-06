@@ -3,7 +3,7 @@ using UnityEngine.Tilemaps;
 
 public class QueueRenderer : MonoBehaviour
 {
-    public SharedShapesQueue shapesQueue; // Changed to SharedShapesQueue
+    public SharedShapesQueue shapesQueue;
     public Tilemap tilemap { get; private set; }
     public TetrisBlockShapeData[] TetrisBlocks;
     public Vector3Int spawnPos;
@@ -37,18 +37,13 @@ public class QueueRenderer : MonoBehaviour
         }
 
         isInitialized = true;
-        Debug.Log($"QueueRenderer Awake: queueRenderSize = {queueRenderSize}");
-        Debug.Log($"QueueRenderer Awake: TetrisBlocks.Length = {TetrisBlocks.Length}");
-        Debug.Log($"QueueRenderer Awake: tilemap = {(tilemap != null ? "Found" : "NULL")}");
     }
 
     void Start()
     {
-        // Use the shared queue from the board
         if (board != null && board.shapesQueue != null)
         {
             shapesQueue = board.shapesQueue;
-            Debug.Log($"QueueRenderer Start: Using shared queue from board");
         }
     }
 
@@ -62,10 +57,10 @@ public class QueueRenderer : MonoBehaviour
 
     public void RenderQueue()
     {
-        if (!isInitialized || 
-            this.tilemap == null || 
-            this.TetrisBlocks == null || 
-            this.TetrisBlocks.Length == 0 || 
+        if (!isInitialized ||
+            this.tilemap == null ||
+            this.TetrisBlocks == null ||
+            this.TetrisBlocks.Length == 0 ||
             queueRenderSize <= 0 ||
             shapesQueue == null)
         {
@@ -81,10 +76,9 @@ public class QueueRenderer : MonoBehaviour
             if (shapeIndex >= 0 && shapeIndex < TetrisBlocks.Length)
             {
                 TetrisBlockShapeData blockData = this.TetrisBlocks[shapeIndex];
-                
+
                 if (blockData.tile == null || blockData.cells == null)
                 {
-                    Debug.LogError($"QueueRenderer: Invalid block data at index {shapeIndex}");
                     continue;
                 }
 
@@ -93,10 +87,6 @@ public class QueueRenderer : MonoBehaviour
                     Vector3Int tilePosition = (Vector3Int)blockData.cells[i] + new Vector3Int(spawnPos[0], spawnPos[1] + 1 + y * 4, spawnPos[2]);
                     this.tilemap.SetTile(tilePosition, blockData.tile);
                 }
-            }
-            else
-            {
-                Debug.LogWarning($"QueueRenderer: Invalid shape index {shapeIndex} for queue position {y}");
             }
         }
     }
@@ -115,7 +105,6 @@ public class QueueRenderer : MonoBehaviour
         {
             shapesQueue = newQueue;
             RefreshQueue();
-            Debug.Log("QueueRenderer: Shapes queue updated and refreshed");
         }
     }
 }
