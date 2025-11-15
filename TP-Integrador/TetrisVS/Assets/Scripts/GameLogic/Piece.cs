@@ -154,24 +154,17 @@ public class Piece : MonoBehaviour
     private void TryMove(Vector3Int direction)
     {
         board.Clear(this);
-        position += direction;
+        position += direction;        
         if (board.IsValidPosition(this, position))
         {
-            board.Set(this);
-            lockTime = 0f;
-
             MultiplayerManager.Instance?.NotifyPieceMoved();
         }
         else
         {
             position -= direction;
-            board.Set(this);
-            lockTime += Time.deltaTime;
-            if (lockTime >= lockDelay)
-            {
-                Lock();
-            }
+            Lock();
         }
+        board.Set(this);
     }
 
     private void HardDrop()
@@ -203,21 +196,22 @@ public class Piece : MonoBehaviour
     private void RotatePiece(int direction)
     {
         board.Clear(this);
-
-        int originalRotation = rotationIndex;
-        rotationIndex = Wrap(rotationIndex + direction, 0, 4);
-
-        ApplyRotationMatrix(direction);
-
-        if (!TestWallKicks(rotationIndex, direction))
+        Vector3Int nextPosition = new Vector3Int(position.x, position.y, position.z);
+        nextPosition += (Vector3Int)Vector3Int.down;
+        if(!board.IsValidPosition(this, nextPosition))
         {
-            rotationIndex = originalRotation;
-            ApplyRotationMatrix(-direction);
+            Lock();
         }
+        else
+        {
+            int originalRotation = rotationIndex;
+            rotationIndex = Wrap(rotationIndex + direction, 0, 4);
 
+            ApplyRotationMatrix(direction);
+
+            MultiplayerManager.Instance?.NotifyPieceRotated();
+        }
         board.Set(this);
-
-        MultiplayerManager.Instance?.NotifyPieceRotated();
     }
 
     private void ApplyRotationMatrix(int direction)
