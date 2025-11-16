@@ -151,6 +151,11 @@ public class Piece : MonoBehaviour
         stepTime = Time.time + stepDelay;
     }
 
+    private bool IsDown(Vector3Int dir)
+    {
+        return dir == Vector3Int.down;
+    }
+
     private void TryMove(Vector3Int direction)
     {
         board.Clear(this);
@@ -162,7 +167,10 @@ public class Piece : MonoBehaviour
         else
         {
             position -= direction;
-            Lock();
+            if (IsDown(direction))
+            {
+                Lock();
+            }
         }
         board.Set(this);
     }
