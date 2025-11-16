@@ -27,18 +27,18 @@ public class WaitingForPlayersUI : MonoBehaviour
         
         UpdateUI();
     }
-    
+
     private void OnDestroy()
     {
         // Unsubscribe from events
         if (MultiplayerManager.Instance != null)
         {
-            MultiplayerManager.OnGameStateUpdated -= OnGameStateChanged;
+            MultiplayerManager.OnGameStateUpdated -= OnGameStateChanged; 
             MultiplayerManager.OnClientConnected -= OnClientConnected;
             MultiplayerManager.OnClientDisconnected -= OnClientDisconnected;
         }
     }
-    
+// Update UI based on current game state    
     private void OnGameStateChanged(GameState newState)
     {
         UpdateUI();
@@ -53,7 +53,7 @@ public class WaitingForPlayersUI : MonoBehaviour
     {
         UpdateUI();
     }
-    
+// Update the waiting panel and texts based on multiplayer state    
     private void UpdateUI()
     {
         if (MultiplayerManager.Instance == null) return;

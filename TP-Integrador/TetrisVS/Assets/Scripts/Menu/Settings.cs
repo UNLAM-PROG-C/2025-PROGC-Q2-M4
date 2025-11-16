@@ -35,7 +35,7 @@ public class Settings : MonoBehaviour
                     Debug.Log("Difficulty level set to: " + HandledLevel);
 #endif
     }
-
+// Initialize settings UI with saved preferences
     void Awake()
     {
         int savedDifficultyLevel = PlayerPrefs.GetInt("DifficultyLevel", 2) - 1;

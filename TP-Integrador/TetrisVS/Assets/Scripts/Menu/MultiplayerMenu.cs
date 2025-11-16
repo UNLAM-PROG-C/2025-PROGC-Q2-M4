@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
-
+// Multiplayer menu logic for hosting or joining a game
 public class MultiplayerMenu : MonoBehaviour
 {
     public Button hostButton;
@@ -12,21 +12,21 @@ public class MultiplayerMenu : MonoBehaviour
     public int tetrisSceneIndex = 0;
 
     private void Start()
-    {
+    { 
         if (prefillLocalhost && ipInput != null)
-            ipInput.text = defaultIP;
+            ipInput.text = defaultIP; // Pre-fill with localhost IP
 
-        if (hostButton != null)
+        if (hostButton != null) 
             hostButton.onClick.AddListener(() =>
-            {
+            { // Host a new multiplayer game
                 EnsureManager();
-                MultiplayerManager.Instance.HostGame();
+                MultiplayerManager.Instance.HostGame(); 
                 SceneManager.LoadScene(tetrisSceneIndex);
             });
 
         if (joinButton != null)
             joinButton.onClick.AddListener(() =>
-            {
+            { // Join an existing multiplayer game
                 var ip = ipInput != null ? ipInput.text.Trim() : "";
                 if (string.IsNullOrWhiteSpace(ip))
                 {
@@ -38,7 +38,7 @@ public class MultiplayerMenu : MonoBehaviour
                 SceneManager.LoadScene(tetrisSceneIndex);
             });
     }
-
+// Ensure the MultiplayerManager instance exists
     private void EnsureManager()
     {
         if (MultiplayerManager.Instance == null)
