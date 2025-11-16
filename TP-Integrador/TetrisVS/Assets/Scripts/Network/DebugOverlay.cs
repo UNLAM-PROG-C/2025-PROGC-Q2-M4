@@ -5,7 +5,7 @@ public class DebugOverlay : MonoBehaviour
     public static float LastRemoteUpdateTime;
 
     private void OnGUI()
-    {
+    {// Display debug information about multiplayer status
         if (MultiplayerManager.Instance == null) return;
         string role = MultiplayerManager.Instance.IsServer ? "HOST" :
                       MultiplayerManager.Instance.IsClient ? "CLIENT" : "NONE";

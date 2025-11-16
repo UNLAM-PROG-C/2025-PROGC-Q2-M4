@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Tilemaps;
-
+// Adapter to interface the local Board with the multiplayer system
 [RequireComponent(typeof(Board))]
 public class BoardMultiplayerAdapter : MonoBehaviour
 {
@@ -18,10 +18,10 @@ public class BoardMultiplayerAdapter : MonoBehaviour
 
     private Tilemap _tilemap;
     private Dictionary<Tile, int> _tileToShapeIndex;
-
+// Initialize the adapter and build tile lookup
     private void Awake()
-    {
-        board ??= GetComponent<Board>();
+    {// Ensure board and tilemap references
+        board ??= GetComponent<Board>(); 
         _tilemap = board.tilemap;
         BuildLookup();
     }
@@ -38,7 +38,7 @@ public class BoardMultiplayerAdapter : MonoBehaviour
     }
 
     private void BuildLookup()
-    {
+    {// Build a mapping from Tile to shape index for quick lookup
         _tileToShapeIndex = new Dictionary<Tile, int>();
         for (int i = 0; i < board.TetrisBlocks.Length; i++)
         {
@@ -49,7 +49,7 @@ public class BoardMultiplayerAdapter : MonoBehaviour
     }
 
     public BoardStateMessage CaptureBoardState()
-    {
+    {// Capture the current state of the board for multiplayer synchronization
         var b = board.Bounds;
         var lockedX = new List<int>();
         var lockedY = new List<int>();
@@ -61,7 +61,7 @@ public class BoardMultiplayerAdapter : MonoBehaviour
             {
                 var pos = new Vector3Int(x, y, 0);
                 if (_tilemap.HasTile(pos))
-                {
+                {// Tile is locked in place
                     var tile = _tilemap.GetTile(pos) as Tile;
                     int shapeIdx = -1;
                     if (tile != null && _tileToShapeIndex.TryGetValue(tile, out var idx))
@@ -72,7 +72,7 @@ public class BoardMultiplayerAdapter : MonoBehaviour
                 }
             }
         }
-
+// Capture active piece info
         bool hasActive = board.activePiece != null && board.activePiece.cells != null;
         int[] offX = new int[hasActive ? board.activePiece.cells.Length : 0];
         int[] offY = new int[hasActive ? board.activePiece.cells.Length : 0];
@@ -88,14 +88,14 @@ public class BoardMultiplayerAdapter : MonoBehaviour
             if (t != null && _tileToShapeIndex.TryGetValue(t, out var idx))
                 activeShapeIndex = idx;
         }
-
+// Capture upcoming shapes in the queue
         int qLen = queuePreviewCount;
         int[] upcoming = new int[qLen];
         for (int i = 0; i < qLen; i++)
             upcoming[i] = board.shapesQueue.PeekShape(i);
 
         return new BoardStateMessage
-        {
+        {// Fill in the board state message
             width = b.width,
             height = b.height,
             lockedCount = lockedX.Count,
@@ -113,7 +113,7 @@ public class BoardMultiplayerAdapter : MonoBehaviour
             gameOver = false
         };
     }
-
+// Notification methods for various game events
     public void NotifyPiecePlaced()
     {
         OnPiecePlaced?.Invoke();

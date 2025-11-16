@@ -1,6 +1,6 @@
 using UnityEngine;
 using UnityEngine.Tilemaps;
-
+// Automatically sets up multiplayer components in the scene
 public class AutoSetupMultiplayer : MonoBehaviour
 {
     public GameObject remoteBoardPrefab;
@@ -10,11 +10,11 @@ public class AutoSetupMultiplayer : MonoBehaviour
     private void Start()
     {
         if (MultiplayerManager.Instance == null)
-        {
+        {// Create MultiplayerManager if it doesn't exist
             var mm = new GameObject("MultiplayerManager");
             mm.AddComponent<MultiplayerManager>();
         }
-
+// Setup local board and remote view
         Board localBoard = FindObjectOfType<Board>();
         if (localBoard == null)
         {
@@ -23,7 +23,7 @@ public class AutoSetupMultiplayer : MonoBehaviour
         }
 
         // Adapter
-        var adapter = localBoard.GetComponent<BoardMultiplayerAdapter>();
+        var adapter = localBoard.GetComponent<BoardMultiplayerAdapter>(); 
         if (adapter == null)
         {
             adapter = localBoard.gameObject.AddComponent<BoardMultiplayerAdapter>();
@@ -53,14 +53,14 @@ public class AutoSetupMultiplayer : MonoBehaviour
             dbg.AddComponent<DebugOverlay>();
         }
     }
-
+// Create a remote board view at the specified position
     private RemoteBoardView CreateRemote(Vector3 pos)
     {
         GameObject root;
         if (remoteBoardPrefab != null)
-            root = Instantiate(remoteBoardPrefab, pos, Quaternion.identity);
+            root = Instantiate(remoteBoardPrefab, pos, Quaternion.identity); 
         else
-        {
+        { // Create basic remote board structure
             root = new GameObject("OpponentBoardRoot");
             root.transform.position = pos;
             root.AddComponent<Grid>();

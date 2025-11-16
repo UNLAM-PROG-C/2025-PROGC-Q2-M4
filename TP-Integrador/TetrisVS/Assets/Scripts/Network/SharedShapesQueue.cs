@@ -10,7 +10,7 @@ public class QueueStateMessage
     public int currentIndex;
     public int seed;
 }
-
+// Manages a shared queue of Tetris shapes for multiplayer synchronization
 public class SharedShapesQueue
 {
     private Queue<int> shapes = new Queue<int>();
@@ -30,7 +30,7 @@ public class SharedShapesQueue
     {
         InitializeWithSeed(seed);
     }
-
+// Initialize the queue with a specific seed
     private void InitializeWithSeed(int seed)
     {
         Seed = seed;
@@ -56,7 +56,7 @@ public class SharedShapesQueue
             return 0;
         return shapes.ElementAt(position);
     }
-
+// Add a new shape to the queue ensuring no immediate repeats
     private void SetShape()
     {
         int shapeIndex = random.Next(0, TETRIS_PIECE_COUNT);
@@ -71,16 +71,16 @@ public class SharedShapesQueue
 
         shapes.Enqueue(shapeIndex);
     }
-
+// Get the current state of the shape queue
     public QueueStateMessage GetQueueState()
     {
         return new QueueStateMessage
-        {
+        {// Serialize upcoming shapes and seed
             upcomingShapes = shapes.ToArray(),
             seed = Seed
         };
     }
-
+// Apply a received queue state to synchronize shapes
     public void ApplyQueueState(QueueStateMessage state)
     {
         if (state.seed != Seed)
@@ -90,7 +90,7 @@ public class SharedShapesQueue
 
         shapes.Clear();
         foreach (int shape in state.upcomingShapes)
-        {
+        {// Rebuild the queue from the received state
             shapes.Enqueue(shape);
         }
     }
