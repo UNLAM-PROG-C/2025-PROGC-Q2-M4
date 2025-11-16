@@ -10,6 +10,9 @@ public class Piece : MonoBehaviour
     public Vector3Int[] cells;
     public TetrisBlockShapeData TBSData;
 
+    public AudioSource audioSource;
+    private AudioClip pieceLock;
+
     public float stepDelay = 1f;
     public float lockDelay = 0.5f;
 
@@ -18,6 +21,13 @@ public class Piece : MonoBehaviour
 // Initialize piece state and adjust delays based on difficulty
     void Awake()
     {
+        pieceLock = Resources.Load<AudioClip>("piece_lock");
+        if (audioSource == null)
+        {
+            audioSource = gameObject.AddComponent<AudioSource>();
+            audioSource.loop = false; 
+        }
+
         if (cells == null || cells.Length != 4)
         {
             cells = new Vector3Int[4];
@@ -188,6 +198,11 @@ public class Piece : MonoBehaviour
 // Lock the piece in place and notify multiplayer manager if applicable
     private void Lock()
     {
+        if (audioSource != null && pieceLock != null)
+        {
+            audioSource.PlayOneShot(pieceLock);
+        }
+        
         board.Clear(this);
         board.Set(this);
 

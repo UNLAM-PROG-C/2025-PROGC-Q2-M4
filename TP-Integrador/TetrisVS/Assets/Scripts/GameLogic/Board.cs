@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.Tilemaps;
 using UnityEngine.SceneManagement;
+using System.Collections;
 
 public class Board : MonoBehaviour
 {
@@ -11,6 +12,14 @@ public class Board : MonoBehaviour
     public Vector2Int boardBoundsSize = new Vector2Int(10, 20);
     public SharedShapesQueue shapesQueue; // Shared queue
     public MultiplayerManager multiplayerManager;
+
+    //Audio
+    public AudioSource audioSource;
+    public AudioSource musicSource; 
+    public AudioClip gameOverClip;
+    private AudioClip lineClearClip;
+    
+    private AudioClip bgMusic; //Background music
 
     // Game state tracking
     public int score = 0;
@@ -36,6 +45,22 @@ public class Board : MonoBehaviour
     {
         this.tilemap = GetComponentInChildren<Tilemap>();
         this.activePiece = GetComponentInChildren<Piece>();
+
+        //Sounds initialization
+        lineClearClip = Resources.Load<AudioClip>("clear_line");
+        gameOverClip = Resources.Load<AudioClip>("game_over");
+        if (audioSource == null)
+        {
+            audioSource = gameObject.AddComponent<AudioSource>();
+            audioSource.loop = false; 
+        }
+
+        bgMusic = Resources.Load<AudioClip>("music_bradinsky");
+        if (musicSource == null)
+        {
+            musicSource = gameObject.AddComponent<AudioSource>();
+            musicSource.loop = true;
+        }
 
         Debug.Log($"Board Awake: TetrisBlocks is {(TetrisBlocks != null ? "not null" : "NULL")}");
         Debug.Log($"Board Awake: TetrisBlocks.Length = {(TetrisBlocks != null ? TetrisBlocks.Length : 0)}");
@@ -69,6 +94,8 @@ public class Board : MonoBehaviour
     {
         if (TetrisBlocks != null && TetrisBlocks.Length > 0)
         {
+            musicSource.clip = bgMusic;
+            musicSource.Play();
             SpawnPiece();
         }
         else
@@ -203,6 +230,10 @@ public class Board : MonoBehaviour
 
         if (clearedLines > 0)
         {
+            if (audioSource != null && lineClearClip != null)
+            {
+                audioSource.PlayOneShot(lineClearClip);
+            }
             // Update game stats
             linesCleared += clearedLines;
             UpdateScore(clearedLines);
@@ -291,15 +322,29 @@ public class Board : MonoBehaviour
         if (gameOver) return;
 
         gameOver = true;
+        if (audioSource != null && gameOverClip != null)
+        {
+            StartCoroutine(GameOverRoutine());
+        }
         Debug.Log("Game Over!");
 
         if (activePiece != null)
         {
             activePiece.enabled = false;
         }
+    }
 
-        // Could send a game over message via multiplayer manager if desired
-        SceneManager.LoadScene(0);
+    private IEnumerator GameOverRoutine()
+    {
+        if (musicSource != null)
+        {
+            musicSource.Stop();
+        }
+        audioSource.PlayOneShot(gameOverClip);
+
+        yield return new WaitForSeconds(gameOverClip.length);
+
+        SceneManager.LoadScene(0);// Restart the scene (goes to main menu)
     }
 // Restart the game by resetting state and clearing the board
     public void RestartGame()
