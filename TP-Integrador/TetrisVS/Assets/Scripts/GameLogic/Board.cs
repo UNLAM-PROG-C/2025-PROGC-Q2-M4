@@ -64,7 +64,7 @@ public class Board : MonoBehaviour
             shapesQueue = new SharedShapesQueue();
         }
     }
-
+// Start the game by spawning the first piece
     private void Start()
     {
         if (TetrisBlocks != null && TetrisBlocks.Length > 0)
@@ -91,9 +91,9 @@ public class Board : MonoBehaviour
             return;
         }
 
-        int shapeIndex = shapesQueue.GetShape();
+        int shapeIndex = shapesQueue.GetShape(); // Get next shape from shared queue
 
-        if (shapeIndex < 0 || shapeIndex >= TetrisBlocks.Length)
+        if (shapeIndex < 0 || shapeIndex >= TetrisBlocks.Length) 
         {
             Debug.LogError($"Invalid shape index: {shapeIndex}, TetrisBlocks.Length: {TetrisBlocks.Length}");
             shapeIndex = 0;
@@ -105,19 +105,19 @@ public class Board : MonoBehaviour
             }
         }
 
-        TetrisBlockShapeData data = this.TetrisBlocks[shapeIndex];
+        TetrisBlockShapeData data = this.TetrisBlocks[shapeIndex]; // Safe access after validation
 
-        if (data.tile == null)
+        if (data.tile == null) 
         {
             Debug.LogError($"Board: TetrisBlocks[{shapeIndex}] has null tile!");
             return;
         }
 
-        this.activePiece.Initialize(this, spawnPos, data);
+        this.activePiece.Initialize(this, spawnPos, data); // Initialize piece with selected shape
 
         if (IsValidPosition(this.activePiece, this.spawnPos))
         {
-            Set(this.activePiece);
+            Set(this.activePiece); // Place piece on board
         }
         else
         {
@@ -141,7 +141,7 @@ public class Board : MonoBehaviour
         shapesQueue.ApplyQueueState(queueState);
         Debug.Log($"Board: Queue synchronized with {queueState.upcomingShapes.Length} shapes");
     }
-
+// Place pieces on the board
     public void Set(Piece piece)
     {
         for (int i = 0; i < piece.cells.Length; i++)
@@ -150,7 +150,7 @@ public class Board : MonoBehaviour
             this.tilemap.SetTile(tilePosition, piece.TBSData.tile);
         }
     }
-
+// Remove pieces from the board
     public void Clear(Piece piece)
     {
         for (int i = 0; i < piece.cells.Length; i++)
@@ -159,21 +159,21 @@ public class Board : MonoBehaviour
             this.tilemap.SetTile(tilePosition, null);
         }
     }
-
+// Check if a piece can be placed at a given position
     public bool IsValidPosition(Piece piece, Vector3Int position)
     {
         RectInt bounds = this.Bounds;
 
-        for (int i = 0; i < piece.cells.Length; i++)
+        for (int i = 0; i < piece.cells.Length; i++) 
         {
             Vector3Int tilePosition = piece.cells[i] + position;
 
-            if (!bounds.Contains((Vector2Int)tilePosition))
+            if (!bounds.Contains((Vector2Int)tilePosition)) // Check out of bounds
             {
                 return false;
             }
 
-            if (this.tilemap.HasTile(tilePosition))
+            if (this.tilemap.HasTile(tilePosition)) // Check if collision with existing tile
             {
                 return false;
             }
@@ -181,7 +181,7 @@ public class Board : MonoBehaviour
 
         return true;
     }
-
+// Clear full lines by checking each row
     public void ClearLines()
     {
         RectInt bounds = this.Bounds;
@@ -203,7 +203,7 @@ public class Board : MonoBehaviour
 
         if (clearedLines > 0)
         {
-            // Update game statistics
+            // Update game stats
             linesCleared += clearedLines;
             UpdateScore(clearedLines);
             UpdateLevel();
@@ -218,7 +218,7 @@ public class Board : MonoBehaviour
             }
         }
     }
-
+// Update score based on lines cleared and current level
     private void UpdateScore(int lines)
     {
         int baseScore = 0;
@@ -231,7 +231,7 @@ public class Board : MonoBehaviour
         }
         score += baseScore * level;
     }
-
+// Increase level every 10 lines cleared
     private void UpdateLevel()
     {
         int newLevel = (linesCleared / 10) + 1;
@@ -258,7 +258,7 @@ public class Board : MonoBehaviour
 
         return true;
     }
-
+// Clear a specific line and move above lines down
     private void LineClear(int row)
     {
         RectInt bounds = this.Bounds;
@@ -285,7 +285,7 @@ public class Board : MonoBehaviour
             row++;
         }
     }
-
+// Handle game over state
     private void GameOver()
     {
         if (gameOver) return;
@@ -301,7 +301,7 @@ public class Board : MonoBehaviour
         // Could send a game over message via multiplayer manager if desired
         SceneManager.LoadScene(0);
     }
-
+// Restart the game by resetting state and clearing the board
     public void RestartGame()
     {
         tilemap.ClearAllTiles();
@@ -312,12 +312,12 @@ public class Board : MonoBehaviour
         level = 1;
         pendingGarbageLines = 0;
 
-        if (MultiplayerManager.Instance == null || MultiplayerManager.Instance.IsServer)
+        if (MultiplayerManager.Instance == null || MultiplayerManager.Instance.IsServer) // Only reset queue if not in multiplayer client mode
         {
             shapesQueue = new SharedShapesQueue();
         }
 
-        if (activePiece != null)
+        if (activePiece != null) 
         {
             activePiece.enabled = true;
         }

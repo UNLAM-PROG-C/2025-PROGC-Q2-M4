@@ -1,6 +1,6 @@
 using UnityEngine;
 using UnityEngine.Tilemaps;
-
+// Renders the upcoming Tetris pieces queue on the tilemap
 public class QueueRenderer : MonoBehaviour
 {
     public SharedShapesQueue shapesQueue;
@@ -12,7 +12,7 @@ public class QueueRenderer : MonoBehaviour
 
     private bool isInitialized = false;
     private Board board;
-
+// Initialize references and Tetris block data
     void Awake()
     {
         this.tilemap = GetComponentInChildren<Tilemap>();
@@ -98,7 +98,7 @@ public class QueueRenderer : MonoBehaviour
             RenderQueue();
         }
     }
-
+// Set a new shapes queue and refresh the rendering
     public void SetShapesQueue(SharedShapesQueue newQueue)
     {
         if (newQueue != null)

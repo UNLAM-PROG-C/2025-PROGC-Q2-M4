@@ -1,6 +1,6 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
-
+// Manages the Tetris piece behavior including movement, rotation, and locking
 public class Piece : MonoBehaviour
 {
     public Board board;
@@ -15,7 +15,7 @@ public class Piece : MonoBehaviour
 
     private float stepTime;
     private float lockTime;
-
+// Initialize piece state and adjust delays based on difficulty
     void Awake()
     {
         if (cells == null || cells.Length != 4)
@@ -87,7 +87,7 @@ public class Piece : MonoBehaviour
 
         return true;
     }
-
+// read the key inputs and move the piece accordingly
     private void HandleInputLocal()
     {
         if (Input.GetKeyDown(KeyCode.LeftArrow))
@@ -144,7 +144,7 @@ public class Piece : MonoBehaviour
             StepDown();
         }
     }
-
+// Move the piece down by one step and handle locking if it cannot move further
     private void StepDown()
     {
         TryMove(Vector3Int.down);
@@ -160,9 +160,9 @@ public class Piece : MonoBehaviour
     {
         board.Clear(this);
         position += direction;        
-        if (board.IsValidPosition(this, position))
+        if (board.IsValidPosition(this, position)) 
         {
-            MultiplayerManager.Instance?.NotifyPieceMoved();
+            MultiplayerManager.Instance?.NotifyPieceMoved(); // Notify only on successful move
         }
         else
         {
@@ -174,7 +174,7 @@ public class Piece : MonoBehaviour
         }
         board.Set(this);
     }
-
+// Perform a hard drop to instantly place the piece at the lowest valid position
     private void HardDrop()
     {
         board.Clear(this);
@@ -185,13 +185,13 @@ public class Piece : MonoBehaviour
         board.Set(this);
         Lock();
     }
-
+// Lock the piece in place and notify multiplayer manager if applicable
     private void Lock()
     {
         board.Clear(this);
         board.Set(this);
 
-        MultiplayerManager.Instance?.NotifyPiecePlaced();
+        MultiplayerManager.Instance?.NotifyPiecePlaced(); // Notify that the piece has been placed
 
         board.ClearLines();
 
@@ -200,13 +200,13 @@ public class Piece : MonoBehaviour
 
         board.SpawnPiece();
     }
-
+// Rotate the piece in the specified direction and handle wall kicks
     private void RotatePiece(int direction)
     {
         board.Clear(this);
         Vector3Int nextPosition = new Vector3Int(position.x, position.y, position.z);
         nextPosition += (Vector3Int)Vector3Int.down;
-        if(!board.IsValidPosition(this, nextPosition))
+        if(!board.IsValidPosition(this, nextPosition)) // If rotation would cause collision, do not rotate and lock instead
         {
             Lock();
         }
@@ -270,7 +270,7 @@ public class Piece : MonoBehaviour
             return min + (input - min) % (max - min);
         }
     }
-
+// Apply the state received from the network to synchronize piece position and shape
     public void ApplyNetworkState(Vector3Int newPos, Vector3Int[] newCells, TetrisBlockShapeData shapeData)
     {
         position = newPos;

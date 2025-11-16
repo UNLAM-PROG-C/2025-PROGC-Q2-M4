@@ -3,13 +3,13 @@ using UnityEngine.Tilemaps;
 
 public enum eTetrisBlockShapes
 {
-    I,
-    O,
+    I, // Line shape
+    O, // Square shape
     T,
     J,
-    L,
+    L, // Mirrored J shape
     S,
-    Z,
+    Z, // Mirrored S shape
 }
 
 [System.Serializable]

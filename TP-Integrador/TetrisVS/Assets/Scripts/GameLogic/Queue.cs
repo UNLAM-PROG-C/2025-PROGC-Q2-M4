@@ -4,7 +4,7 @@ using System;
 using System.Linq;
 using UnityEngine;
 using System.Collections.Generic;
-
+// Manages the queue of upcoming Tetris piece shapes
 public class ShapesQueue {
     private static Queue<int> Shapes = new Queue<int>();
     private static System.Random random = new System.Random();
@@ -12,12 +12,12 @@ public class ShapesQueue {
 
     public ShapesQueue()
     {
-        for (int i = 0; i < 7; i++)
+        for (int i = 0; i < 7; i++) // Pre-fill the queue with 7 shapes
         {
             setShape();
         }
     }
-
+// Dequeue and return the next shape index, then enqueue a new shape
     public int getShape()
     {
         int nextShape = Shapes.Dequeue();
@@ -31,7 +31,7 @@ public class ShapesQueue {
             return 0;
         return Shapes.ElementAt(position);
     }
-
+// Enqueue a new random shape index, ensuring no immediate repeats
     private void setShape()
     {
         int shapeIndex = random.Next(0, TETRIS_PIECE_COUNT);

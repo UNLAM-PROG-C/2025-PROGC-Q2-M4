@@ -1,6 +1,6 @@
 using UnityEngine;
 using UnityEngine.Tilemaps;
-
+// Manages the shadow as a ghost piece that shows where the current piece will land
 public class GhostPiece : MonoBehaviour
 {
     public Tile tile;
@@ -9,7 +9,7 @@ public class GhostPiece : MonoBehaviour
     public Tilemap tilemap { get; private set; }
     public Vector3Int position { get; private set; }
     public Vector3Int[] cells { get; private set; }
-
+// Initialize references and cell array
     private void Awake()
     {
         this.tilemap = GetComponentInChildren<Tilemap>();
