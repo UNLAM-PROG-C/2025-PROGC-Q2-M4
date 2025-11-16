@@ -31,7 +31,7 @@ public class Board : MonoBehaviour
             return new RectInt(position, this.boardBoundsSize);
         }
     }
-
+// Initialization board and pieces
     private void Awake()
     {
         this.tilemap = GetComponentInChildren<Tilemap>();
