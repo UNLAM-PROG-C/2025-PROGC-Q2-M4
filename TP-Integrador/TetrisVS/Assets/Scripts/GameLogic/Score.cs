@@ -19,7 +19,7 @@ public class Score : MonoBehaviour
     public void UpdateScore(int score)
     {
         Debug.Log($"Updating score display to: {score}");
-        scoreText.text = score.ToString();
+        scoreText.text = score.ToString(); // Update the UI in text field with the new score
         Debug.Log("Score display updated.");
     }
 
