@@ -615,6 +615,7 @@ MonoBehaviour:
   TBSData:
     Shape: 0
     tile: {fileID: 0}
+  audioSource: {fileID: 0}
   stepDelay: 0.5
   lockDelay: 0.5
 --- !u!114 &329705362
@@ -647,10 +648,15 @@ MonoBehaviour:
   spawnPos: {x: -1, y: 8, z: 0}
   boardBoundsSize: {x: 10, y: 20}
   multiplayerManager: {fileID: 557245965}
+  scoreUI: {fileID: 0}
+  audioSource: {fileID: 0}
+  musicSource: {fileID: 0}
+  gameOverClip: {fileID: 0}
   score: 0
   linesCleared: 0
   level: 1
   gameOver: 0
+  maxGarbageApplyPerLock: 8
 --- !u!156049354 &329705364
 Grid:
   m_ObjectHideFlags: 0
@@ -787,10 +793,15 @@ MonoBehaviour:
   spawnPos: {x: -1, y: 8, z: 0}
   boardBoundsSize: {x: 10, y: 20}
   multiplayerManager: {fileID: 557245965}
+  scoreUI: {fileID: 0}
+  audioSource: {fileID: 0}
+  musicSource: {fileID: 0}
+  gameOverClip: {fileID: 0}
   score: 0
   linesCleared: 0
   level: 1
   gameOver: 0
+  maxGarbageApplyPerLock: 8
 --- !u!114 &354898003
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -808,8 +819,102 @@ MonoBehaviour:
   TBSData:
     Shape: 0
     tile: {fileID: 0}
+  audioSource: {fileID: 0}
   stepDelay: 0.5
   lockDelay: 0.5
+--- !u!1 &369154082
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 369154083}
+  - component: {fileID: 369154086}
+  - component: {fileID: 369154085}
+  - component: {fileID: 369154084}
+  m_Layer: 5
+  m_Name: Text_ScoreResult
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &369154083
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 369154082}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1333370717}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 47.629, y: -210}
+  m_SizeDelta: {x: 95.258, y: 30}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &369154084
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 369154082}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 58425d3cf25e4e34592e60c7507fc594, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Score
+  scoreText: {fileID: 369154085}
+--- !u!114 &369154085
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 369154082}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5f7201a12d95ffc409449d95f23cf332, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Text
+  m_Material: {fileID: 0}
+  m_Color: {r: 0.19607843, g: 0.19607843, b: 0.19607843, a: 1}
+  m_RaycastTarget: 1
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_FontData:
+    m_Font: {fileID: 12800000, guid: 304e517c070adf243a81490b3572c54c, type: 3}
+    m_FontSize: 30
+    m_FontStyle: 1
+    m_BestFit: 0
+    m_MinSize: 3
+    m_MaxSize: 40
+    m_Alignment: 4
+    m_AlignByGeometry: 0
+    m_RichText: 1
+    m_HorizontalOverflow: 0
+    m_VerticalOverflow: 0
+    m_LineSpacing: 1
+  m_Text: 
+--- !u!222 &369154086
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 369154082}
+  m_CullTransparentMesh: 1
 --- !u!1 &557245964
 GameObject:
   m_ObjectHideFlags: 0
@@ -1050,8 +1155,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -15, y: -210}
-  m_SizeDelta: {x: 160, y: 30}
+  m_AnchoredPosition: {x: -47.500004, y: -210}
+  m_SizeDelta: {x: 95, y: 30}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &867935241
 MonoBehaviour:
@@ -1695,6 +1800,7 @@ RectTransform:
   - {fileID: 703640049}
   - {fileID: 1252068404}
   - {fileID: 867935240}
+  - {fileID: 369154083}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
