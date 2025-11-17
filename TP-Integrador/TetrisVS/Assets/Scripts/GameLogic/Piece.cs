@@ -16,6 +16,9 @@ public class Piece : MonoBehaviour
     public float stepDelay = 1f;
     public float lockDelay = 0.5f;
 
+    private float moveCooldown = 0.05f; //Piece movement cooldown
+    private float lastMoveTime = 0f; //Piece last move time
+
     private float stepTime;
     private float lockTime;
 // Initialize piece state and adjust delays based on difficulty
@@ -100,34 +103,44 @@ public class Piece : MonoBehaviour
 // read the key inputs and move the piece accordingly
     private void HandleInputLocal()
     {
-        if (Input.GetKeyDown(KeyCode.LeftArrow))
+        if (Time.time - lastMoveTime < moveCooldown){
+            return;
+        }
+
+        if (Input.GetKeyDown(KeyCode.Q))
+        {
+            RotatePiece(1);      // Clockwise
+            lastMoveTime = 0;
+        }
+        else if (Input.GetKeyDown(KeyCode.E))
+        {
+            RotatePiece(-1);     // Counter-Clockwise
+            lastMoveTime = 0;
+        }
+        else if (Input.GetKey(KeyCode.LeftArrow))
         {
             TryMove(Vector3Int.left);
+            lastMoveTime = Time.time;
         }
-        else if (Input.GetKeyDown(KeyCode.RightArrow))
+        else if (Input.GetKey(KeyCode.RightArrow))
         {
             TryMove(Vector3Int.right);
+            lastMoveTime = Time.time;
         }
-        else if (Input.GetKeyDown(KeyCode.DownArrow))
+        else if (Input.GetKey(KeyCode.DownArrow))
         {
             TryMove(Vector3Int.down);
+            lastMoveTime = Time.time;
         }
         else if (Input.GetKeyDown(KeyCode.Space))
         {
             HardDrop();
+            lastMoveTime = Time.time;
         }
         else if (Input.GetKeyDown(KeyCode.Escape))
         {
             board.multiplayerManager?.LeaveGame();
             SceneManager.LoadScene(0);
-        }
-        else if (Input.GetKeyDown(KeyCode.Q))
-        {
-            RotatePiece(1);      // Clockwise
-        }
-        else if (Input.GetKeyDown(KeyCode.E))
-        {
-            RotatePiece(-1);     // Counter-Clockwise
         }
         else if (Input.GetKeyDown(KeyCode.R))
         {
