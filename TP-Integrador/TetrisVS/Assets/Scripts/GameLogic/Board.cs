@@ -13,6 +13,8 @@ public class Board : MonoBehaviour
     public SharedShapesQueue shapesQueue; // Shared queue
     public MultiplayerManager multiplayerManager;
 
+    public Score scoreUI; // Reference to Score UI component
+
     //Audio
     public AudioSource audioSource;
     public AudioSource musicSource; 
@@ -94,6 +96,7 @@ public class Board : MonoBehaviour
     {
         if (TetrisBlocks != null && TetrisBlocks.Length > 0)
         {
+            scoreUI = FindObjectOfType<Score>();
             musicSource.clip = bgMusic;
             musicSource.Play();
             SpawnPiece();
@@ -240,7 +243,8 @@ public class Board : MonoBehaviour
             UpdateLevel();
 
             Debug.Log($"Cleared {clearedLines} lines. Total: {linesCleared}");
-
+            Debug.Log("-------------------------------------");
+            Debug.Log($"Score: {score}, Level: {level}");
             // Notify multiplayer manager (will trigger garbage sending)
             var adapter = GetComponent<BoardMultiplayerAdapter>();
             if (adapter != null)
@@ -260,7 +264,17 @@ public class Board : MonoBehaviour
             case 3: baseScore = 300; break;
             case 4: baseScore = 1200; break;
         }
+        Debug.Log($"Score increased by {baseScore * level} points");
         score += baseScore * level;
+        Debug.Log($"New Score: {score}");
+        // Update score UI
+        Debug.Log("Updating score UI... - Before calling scoreUI.UpdateScore");
+        if (scoreUI != null)
+        {
+            scoreUI.UpdateScore(score);
+            Debug.Log("Score UI updated. - After calling scoreUI.UpdateScore");
+        }
+        
     }
 // Increase level every 10 lines cleared
     private void UpdateLevel()
