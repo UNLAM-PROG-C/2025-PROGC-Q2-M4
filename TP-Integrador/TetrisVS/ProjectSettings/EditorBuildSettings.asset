@@ -20,6 +20,9 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/Game/SceneMultiplayerTetris.unity
     guid: da087f7eb3fa7964691cbdd7c42102b3
+  - enabled: 1
+    path: Assets/Scenes/Menu/SceneGameOver.unity
+    guid: af8ccbe42e81dfb4c921edcf9592fb4e
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 2bcd2660ca9b64942af0de543d8d7100, type: 3}
   m_UseUCBPForAssetBundles: 0
