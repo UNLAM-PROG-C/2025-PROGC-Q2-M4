@@ -344,7 +344,7 @@ public class Board : MonoBehaviour
 
         yield return new WaitForSeconds(gameOverClip.length);
 
-        SceneManager.LoadScene(0);// Restart the scene (goes to main menu)
+        SceneManager.LoadScene(5);// Restart the scene (goes to main menu)
     }
 // Restart the game by resetting state and clearing the board
     public void RestartGame()
