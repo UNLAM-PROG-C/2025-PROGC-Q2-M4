@@ -232,21 +232,19 @@ public class Piece : MonoBehaviour
     private void RotatePiece(int direction)
     {
         board.Clear(this);
-        Vector3Int nextPosition = new Vector3Int(position.x, position.y, position.z);
-        nextPosition += (Vector3Int)Vector3Int.down;
-        if(!board.IsValidPosition(this, nextPosition)) // If rotation would cause collision, do not rotate and lock instead
+        int originalRotation = rotationIndex;
+        rotationIndex = Wrap(rotationIndex + direction, 0, 4);
+        ApplyRotationMatrix(direction);
+        if(!TestWallKicks(rotationIndex, direction))
         {
-            Lock();
+            // Revert rotation if wall kicks fail
+            rotationIndex = originalRotation;
+            ApplyRotationMatrix(-direction);
+            board.Set(this);
+            return;
         }
-        else
-        {
-            int originalRotation = rotationIndex;
-            rotationIndex = Wrap(rotationIndex + direction, 0, 4);
 
-            ApplyRotationMatrix(direction);
-
-            MultiplayerManager.Instance?.NotifyPieceRotated();
-        }
+        MultiplayerManager.Instance?.NotifyPieceRotated();
         board.Set(this);
     }
 
@@ -282,9 +280,28 @@ public class Piece : MonoBehaviour
 
     private bool TestWallKicks(int rotationIndex, int rotationDirection)
     {
-        // Placeholder wall kick test (SRS kicks can be added integrating Data.WallKicks)
-        // For now always return true for simplicity
-        return true;
+        int wallKickIndex = rotationIndex;
+        if (rotationDirection < 0)
+        {
+            wallKickIndex = Wrap(rotationIndex + 1, 0, 4);
+        }
+        Vector2Int[,] wallKicks = TBSData.wallKicks;
+
+        for (int i = 0; i < wallKicks.GetLength(1); i++)
+        {
+            Vector2Int offset = wallKicks[wallKickIndex * 2 + (rotationDirection > 0 ? 0 : 1), i];
+            Vector3Int testPosition = position + new Vector3Int(offset.x, offset.y, 0);
+            if (board.IsValidPosition(this, testPosition))
+            {
+                position = testPosition;
+                return true;
+            }
+        }
+
+        return false;
+
+
+
     }
 
     private int Wrap(int input, int min, int max)

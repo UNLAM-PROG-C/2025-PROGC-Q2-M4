@@ -19,9 +19,10 @@ public struct TetrisBlockShapeData
     public Tile tile;
 
     public Vector2Int[] cells { get; private set; }
-
+    public Vector2Int[,] wallKicks { get; private set; }
     public void Initialize()
     {
         this.cells = Data.Cells[this.Shape];
+        wallKicks = Data.WallKicks[this.Shape];
     }
 }
