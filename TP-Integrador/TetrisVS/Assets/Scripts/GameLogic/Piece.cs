@@ -25,17 +25,12 @@ public class Piece : MonoBehaviour
     void Awake()
     {
         pieceLock = Resources.Load<AudioClip>("piece_lock");
-        if (audioSource == null)
-        {
-            audioSource = gameObject.AddComponent<AudioSource>();
-            audioSource.loop = false; 
-        }
+        SetupAudioSource();
 
         if (cells == null || cells.Length != 4)
         {
             cells = new Vector3Int[4];
         }
-
         rotationIndex = 0;
 
         int difficulty = PlayerPrefs.GetInt("DifficultyLevel", 2);
@@ -43,6 +38,17 @@ public class Piece : MonoBehaviour
         lockDelay = lockDelay / Mathf.Max(1, difficulty - 1);
 
         Debug.Log($"[Piece] Awake - stepDelay: {stepDelay}, lockDelay: {lockDelay}");
+    }
+
+    private void SetupAudioSource()
+    {
+        if (audioSource == null)
+        {
+            audioSource = gameObject.AddComponent<AudioSource>();
+            audioSource.loop = false;
+        }
+
+
     }
 
     public void Initialize(Board board, Vector3Int spawnPos, TetrisBlockShapeData data)
@@ -258,23 +264,28 @@ public class Piece : MonoBehaviour
 
             int x, y;
 
-            switch (TBSData.Shape)
-            {
-                case eTetrisBlockShapes.I:
-                case eTetrisBlockShapes.O:
-                    cell.x -= 0.5f;
-                    cell.y -= 0.5f;
-                    x = Mathf.CeilToInt((cell.x * matrix[0] * direction) + (cell.y * matrix[1] * direction));
-                    y = Mathf.CeilToInt((cell.x * matrix[2] * direction) + (cell.y * matrix[3] * direction));
-                    break;
-
-                default:
-                    x = Mathf.RoundToInt((cell.x * matrix[0] * direction) + (cell.y * matrix[1] * direction));
-                    y = Mathf.RoundToInt((cell.x * matrix[2] * direction) + (cell.y * matrix[3] * direction));
-                    break;
-            }
+            ApplyRotationOnBlock(direction, matrix, cell, out x, out y);
 
             cells[i] = new Vector3Int(x, y, 0);
+        }
+    }
+
+    private void ApplyRotationOnBlock(int direction, float[] matrix, Vector3 cell, out int x, out int y)
+    {
+        switch (TBSData.Shape)
+        {
+            case eTetrisBlockShapes.I:
+            case eTetrisBlockShapes.O:
+                cell.x -= 0.5f;
+                cell.y -= 0.5f;
+                x = Mathf.CeilToInt((cell.x * matrix[0] * direction) + (cell.y * matrix[1] * direction));
+                y = Mathf.CeilToInt((cell.x * matrix[2] * direction) + (cell.y * matrix[3] * direction));
+                break;
+
+            default:
+                x = Mathf.RoundToInt((cell.x * matrix[0] * direction) + (cell.y * matrix[1] * direction));
+                y = Mathf.RoundToInt((cell.x * matrix[2] * direction) + (cell.y * matrix[3] * direction));
+                break;
         }
     }
 
@@ -299,9 +310,6 @@ public class Piece : MonoBehaviour
         }
 
         return false;
-
-
-
     }
 
     private int Wrap(int input, int min, int max)

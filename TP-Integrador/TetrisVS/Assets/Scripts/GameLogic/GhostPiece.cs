@@ -79,17 +79,28 @@ public class GhostPiece : MonoBehaviour
         {
             position.y = row;
 
-            if (this.board.IsValidPosition(this.trackedPiece, position))
-            {
-                this.position = position;
-            }
-            else
+            bool isNextPositionValid = CheckNextPosition(position);
+            if (!isNextPositionValid)
             {
                 break;
             }
         }
 
         this.board.Set(this.trackedPiece);
+    }
+
+    private bool CheckNextPosition(Vector3Int position)
+    {
+        if (this.board.IsValidPosition(this.trackedPiece, position))
+        {
+            this.position = position;
+        }
+        else
+        {
+            return false;
+        }
+
+        return true;
     }
 
     private void Set()

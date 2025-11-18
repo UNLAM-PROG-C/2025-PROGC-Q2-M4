@@ -75,20 +75,27 @@ public class QueueRenderer : MonoBehaviour
 
             if (shapeIndex >= 0 && shapeIndex < TetrisBlocks.Length)
             {
-                TetrisBlockShapeData blockData = this.TetrisBlocks[shapeIndex];
-
-                if (blockData.tile == null || blockData.cells == null)
-                {
-                    continue;
-                }
-
-                for (int i = 0; i < blockData.cells.Length; i++)
-                {
-                    Vector3Int tilePosition = (Vector3Int)blockData.cells[i] + new Vector3Int(spawnPos[0], spawnPos[1] + 1 + y * 4, spawnPos[2]);
-                    this.tilemap.SetTile(tilePosition, blockData.tile);
-                }
+                RenderPieceInQueue(y, shapeIndex);
             }
         }
+    }
+
+    private void RenderPieceInQueue(int y, int shapeIndex)
+    {
+        TetrisBlockShapeData blockData = this.TetrisBlocks[shapeIndex];
+
+        if (blockData.tile == null || blockData.cells == null)
+        {
+            return;
+        }
+
+        for (int i = 0; i < blockData.cells.Length; i++)
+        {
+            Vector3Int tilePosition = (Vector3Int)blockData.cells[i] + new Vector3Int(spawnPos[0], spawnPos[1] + 1 + y * 4, spawnPos[2]);
+            this.tilemap.SetTile(tilePosition, blockData.tile);
+        }
+
+        return;
     }
 
     public void RefreshQueue()

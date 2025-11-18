@@ -48,19 +48,7 @@ public class Board : MonoBehaviour
         this.activePiece = GetComponentInChildren<Piece>();
 
         //Sounds initialization
-        lineClearClip = Resources.Load<AudioClip>("clear_line");
-        if (audioSource == null)
-        {
-            audioSource = gameObject.AddComponent<AudioSource>();
-            audioSource.loop = false; 
-        }
-
-        bgMusic = Resources.Load<AudioClip>("music_bradinsky");
-        if (musicSource == null)
-        {
-            musicSource = gameObject.AddComponent<AudioSource>();
-            musicSource.loop = true;
-        }
+        InitializeAudio();
 
         Debug.Log($"Board Awake: TetrisBlocks is {(TetrisBlocks != null ? "not null" : "NULL")}");
         Debug.Log($"Board Awake: TetrisBlocks.Length = {(TetrisBlocks != null ? TetrisBlocks.Length : 0)}");
@@ -71,6 +59,17 @@ public class Board : MonoBehaviour
             return;
         }
 
+        InitializeTetrisBlocks();
+
+        // Initialize queue - will be overridden by multiplayer manager if needed
+        if (shapesQueue == null)
+        {
+            shapesQueue = new SharedShapesQueue();
+        }
+    }
+
+    private void InitializeTetrisBlocks()
+    {
         for (int i = 0; i < this.TetrisBlocks.Length; i++)
         {
             if (TetrisBlocks[i].tile != null)
@@ -82,14 +81,26 @@ public class Board : MonoBehaviour
                 Debug.LogError($"TetrisBlocks[{i}].tile is NULL!");
             }
         }
+    }
 
-        // Initialize queue - will be overridden by multiplayer manager if needed
-        if (shapesQueue == null)
+    private void InitializeAudio()
+    {
+        lineClearClip = Resources.Load<AudioClip>("clear_line");
+        if (audioSource == null)
         {
-            shapesQueue = new SharedShapesQueue();
+            audioSource = gameObject.AddComponent<AudioSource>();
+            audioSource.loop = false;
+        }
+
+        bgMusic = Resources.Load<AudioClip>("music_bradinsky");
+        if (musicSource == null)
+        {
+            musicSource = gameObject.AddComponent<AudioSource>();
+            musicSource.loop = true;
         }
     }
-// Start the game by spawning the first piece
+
+    // Start the game by spawning the first piece
     private void Start()
     {
         if (TetrisBlocks != null && TetrisBlocks.Length > 0)
@@ -213,9 +224,24 @@ public class Board : MonoBehaviour
     public void ClearLines()
     {
         RectInt bounds = this.Bounds;
-        int row = bounds.yMin;
-        int clearedLines = 0;
 
+        int clearedLines=GetFullLines(bounds);
+
+        if (clearedLines > 0)
+        {
+            if (audioSource != null && lineClearClip != null)
+            {
+                audioSource.PlayOneShot(lineClearClip);
+            }
+            linesCleared += clearedLines;
+            UpdateGameStats(clearedLines);
+        }
+    }
+
+    private int GetFullLines(RectInt bounds)
+    {
+        int row = bounds.yMin;
+        int clearedLines=0;
         while (row < bounds.yMax)
         {
             if (IsLineFull(row))
@@ -228,30 +254,26 @@ public class Board : MonoBehaviour
                 row++;
             }
         }
+        return clearedLines;
+    }
 
-        if (clearedLines > 0)
+    private void UpdateGameStats(int clearedLines)
+    {
+        UpdateScore(clearedLines);
+        UpdateLevel();
+
+        Debug.Log($"Cleared {clearedLines} lines. Total: {linesCleared}");
+        Debug.Log("-------------------------------------");
+        Debug.Log($"Score: {score}, Level: {level}");
+        // Notify multiplayer manager (will trigger garbage sending)
+        var adapter = GetComponent<BoardMultiplayerAdapter>();
+        if (adapter != null)
         {
-            if (audioSource != null && lineClearClip != null)
-            {
-                audioSource.PlayOneShot(lineClearClip);
-            }
-            // Update game stats
-            linesCleared += clearedLines;
-            UpdateScore(clearedLines);
-            UpdateLevel();
-
-            Debug.Log($"Cleared {clearedLines} lines. Total: {linesCleared}");
-            Debug.Log("-------------------------------------");
-            Debug.Log($"Score: {score}, Level: {level}");
-            // Notify multiplayer manager (will trigger garbage sending)
-            var adapter = GetComponent<BoardMultiplayerAdapter>();
-            if (adapter != null)
-            {
-                adapter.NotifyLinesCleared(clearedLines);
-            }
+            adapter.NotifyLinesCleared(clearedLines);
         }
     }
-// Update score based on lines cleared and current level
+
+    // Update score based on lines cleared and current level
     private void UpdateScore(int lines)
     {
         int baseScore = 0;
@@ -314,6 +336,11 @@ public class Board : MonoBehaviour
         }
 
         // Move all rows above down by one
+        MoveRowsDown(row, bounds);
+    }
+
+    private void MoveRowsDown(int row, RectInt bounds)
+    {
         while (row < bounds.yMax)
         {
             for (int col = bounds.xMin; col < bounds.xMax; col++)
@@ -327,8 +354,11 @@ public class Board : MonoBehaviour
 
             row++;
         }
+
+        return;
     }
-// Handle game over state
+
+    // Handle game over state
     private void GameOver()
     {
         if (gameOver) return;
@@ -399,25 +429,10 @@ public class Board : MonoBehaviour
         RectInt bounds = Bounds;
 
         // Shift existing tiles UP
-        for (int y = bounds.yMax - 1; y >= bounds.yMin; y--)
+        bool topOut = ShiftExistingTilesUp(count, ref bounds);
+        if (!topOut)
         {
-            for (int x = bounds.xMin; x < bounds.xMax; x++)
-            {
-                Vector3Int fromPos = new Vector3Int(x, y, 0);
-                TileBase tile = tilemap.GetTile(fromPos);
-                if (tile != null)
-                {
-                    Vector3Int toPos = new Vector3Int(x, y + count, 0);
-                    if (toPos.y >= bounds.yMax)
-                    {
-                        // Top-out
-                        Debug.Log("[Board] Garbage caused top-out");
-                        GameOver();
-                        return;
-                    }
-                    tilemap.SetTile(toPos, tile);
-                }
-            }
+            return;
         }
 
         // Clear old positions that were shifted (avoid duplication)
@@ -430,6 +445,13 @@ public class Board : MonoBehaviour
         }
 
         // Create garbage rows at bottom
+        CreateBottomRows(count, bounds);
+
+        Debug.Log($"[Board] Applied {count} garbage lines. Remaining pending: {pendingGarbageLines}");
+    }
+
+    private void CreateBottomRows(int count, RectInt bounds)
+    {
         for (int g = 0; g < count; g++)
         {
             int holeColumn = garbageRng.Next(bounds.xMin, bounds.xMax);
@@ -445,7 +467,31 @@ public class Board : MonoBehaviour
                 }
             }
         }
+    }
 
-        Debug.Log($"[Board] Applied {count} garbage lines. Remaining pending: {pendingGarbageLines}");
+    private bool ShiftExistingTilesUp(int count, ref RectInt bounds)
+    {
+        for (int y = bounds.yMax - 1; y >= bounds.yMin; y--)
+        {
+            for (int x = bounds.xMin; x < bounds.xMax; x++)
+            {
+                Vector3Int fromPos = new Vector3Int(x, y, 0);
+                TileBase tile = tilemap.GetTile(fromPos);
+                if (tile != null)
+                {
+                    Vector3Int toPos = new Vector3Int(x, y + count, 0);
+                    if (toPos.y >= bounds.yMax)
+                    {
+                        // Top-out
+                        Debug.Log("[Board] Garbage caused top-out");
+                        GameOver();
+                        return false;
+                    }
+                    tilemap.SetTile(toPos, tile);
+                }
+            }
+        }
+
+        return true;
     }
 }
