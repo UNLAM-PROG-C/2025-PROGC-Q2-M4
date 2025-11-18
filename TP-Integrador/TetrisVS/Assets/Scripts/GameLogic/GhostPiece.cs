@@ -18,7 +18,7 @@ public class GhostPiece : MonoBehaviour
 
     private void LateUpdate()
     {
-        if (!IsValidForUpdate())
+        if (!IsValidForUpdate() || board + "" == "Grid_EnemyGameBoard (Board)")
         {
             return;
         }
