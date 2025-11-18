@@ -18,7 +18,6 @@ public class Board : MonoBehaviour
     //Audio
     public AudioSource audioSource;
     public AudioSource musicSource; 
-    public AudioClip gameOverClip;
     private AudioClip lineClearClip;
     
     private AudioClip bgMusic; //Background music
@@ -50,7 +49,6 @@ public class Board : MonoBehaviour
 
         //Sounds initialization
         lineClearClip = Resources.Load<AudioClip>("clear_line");
-        gameOverClip = Resources.Load<AudioClip>("game_over");
         if (audioSource == null)
         {
             audioSource = gameObject.AddComponent<AudioSource>();
@@ -336,30 +334,19 @@ public class Board : MonoBehaviour
         if (gameOver) return;
 
         gameOver = true;
-        if (audioSource != null && gameOverClip != null)
-        {
-            StartCoroutine(GameOverRoutine());
-        }
+
         Debug.Log("Game Over!");
 
         if (activePiece != null)
         {
             activePiece.enabled = false;
         }
-    }
-
-    private IEnumerator GameOverRoutine()
-    {
-        if (musicSource != null)
-        {
+        if (musicSource != null) {
             musicSource.Stop();
         }
-        audioSource.PlayOneShot(gameOverClip);
-
-        yield return new WaitForSeconds(gameOverClip.length);
-
         SceneManager.LoadScene(5);// Restart the scene (goes to game over screen)
     }
+
 // Restart the game by resetting state and clearing the board
     public void RestartGame()
     {
