@@ -41,8 +41,7 @@ public class Board : MonoBehaviour
             return new RectInt(position, this.boardBoundsSize);
         }
     }
-
-    // Initialization board and pieces
+// Initialization board and pieces
     private void Awake()
     {
         this.tilemap = GetComponentInChildren<Tilemap>();
@@ -181,8 +180,7 @@ public class Board : MonoBehaviour
         shapesQueue.ApplyQueueState(queueState);
         Debug.Log($"Board: Queue synchronized with {queueState.upcomingShapes.Length} shapes");
     }
-
-    // Place pieces on the board
+// Place pieces on the board
     public void Set(Piece piece)
     {
         for (int i = 0; i < piece.cells.Length; i++)
@@ -191,8 +189,7 @@ public class Board : MonoBehaviour
             this.tilemap.SetTile(tilePosition, piece.TBSData.tile);
         }
     }
-
-    // Remove pieces from the board
+// Remove pieces from the board
     public void Clear(Piece piece)
     {
         for (int i = 0; i < piece.cells.Length; i++)
@@ -201,8 +198,7 @@ public class Board : MonoBehaviour
             this.tilemap.SetTile(tilePosition, null);
         }
     }
-
-    // Check if a piece can be placed at a given position
+// Check if a piece can be placed at a given position
     public bool IsValidPosition(Piece piece, Vector3Int position)
     {
         RectInt bounds = this.Bounds;
@@ -224,8 +220,7 @@ public class Board : MonoBehaviour
 
         return true;
     }
-
-    // Clear full lines by checking each row
+// Clear full lines by checking each row
     public void ClearLines()
     {
         RectInt bounds = this.Bounds;
@@ -260,39 +255,6 @@ public class Board : MonoBehaviour
             }
         }
         return clearedLines;
-    }
-
-    private bool IsLineFull(int row)
-    {
-        RectInt bounds = this.Bounds;
-
-        for (int col = bounds.xMin; col < bounds.xMax; col++)
-        {
-            Vector3Int position = new Vector3Int(col, row, 0);
-
-            if (!this.tilemap.HasTile(position))
-            {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    // Clear a specific line and move above lines down
-    private void LineClear(int row)
-    {
-        RectInt bounds = this.Bounds;
-
-        // Clear the full row
-        for (int col = bounds.xMin; col < bounds.xMax; col++)
-        {
-            Vector3Int position = new Vector3Int(col, row, 0);
-            this.tilemap.SetTile(position, null);
-        }
-
-        // Move all rows above down by one
-        MoveRowsDown(row, bounds);
     }
 
     private void UpdateGameStats(int clearedLines)
@@ -334,8 +296,7 @@ public class Board : MonoBehaviour
         }
         
     }
-
-    // Increase level every 10 lines cleared
+// Increase level every 10 lines cleared
     private void UpdateLevel()
     {
         int newLevel = (linesCleared / 10) + 1;
@@ -344,6 +305,38 @@ public class Board : MonoBehaviour
             level = newLevel;
             Debug.Log($"Level up! Now level {level}");
         }
+    }
+
+    private bool IsLineFull(int row)
+    {
+        RectInt bounds = this.Bounds;
+
+        for (int col = bounds.xMin; col < bounds.xMax; col++)
+        {
+            Vector3Int position = new Vector3Int(col, row, 0);
+
+            if (!this.tilemap.HasTile(position))
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+// Clear a specific line and move above lines down
+    private void LineClear(int row)
+    {
+        RectInt bounds = this.Bounds;
+
+        // Clear the full row
+        for (int col = bounds.xMin; col < bounds.xMax; col++)
+        {
+            Vector3Int position = new Vector3Int(col, row, 0);
+            this.tilemap.SetTile(position, null);
+        }
+
+        // Move all rows above down by one
+        MoveRowsDown(row, bounds);
     }
 
     private void MoveRowsDown(int row, RectInt bounds)
@@ -384,7 +377,7 @@ public class Board : MonoBehaviour
         SceneManager.LoadScene(5);// Restart the scene (goes to game over screen)
     }
 
-    // Restart the game by resetting state and clearing the board
+// Restart the game by resetting state and clearing the board
     public void RestartGame()
     {
         tilemap.ClearAllTiles();
@@ -411,6 +404,7 @@ public class Board : MonoBehaviour
     }
 
     // --- Garbage System Public Interface ---
+
     public void EnqueueGarbage(int count)
     {
         if (count <= 0 || gameOver) return;
@@ -456,6 +450,25 @@ public class Board : MonoBehaviour
         Debug.Log($"[Board] Applied {count} garbage lines. Remaining pending: {pendingGarbageLines}");
     }
 
+    private void CreateBottomRows(int count, RectInt bounds)
+    {
+        for (int g = 0; g < count; g++)
+        {
+            int holeColumn = garbageRng.Next(bounds.xMin, bounds.xMax);
+            for (int x = bounds.xMin; x < bounds.xMax; x++)
+            {
+                if (x == holeColumn) continue;
+
+                // Use a neutral tile: pick first tile or any
+                TileBase garbageTile = TetrisBlocks.Length > 0 ? TetrisBlocks[0].tile : null;
+                if (garbageTile != null)
+                {
+                    tilemap.SetTile(new Vector3Int(x, bounds.yMin + g, 0), garbageTile);
+                }
+            }
+        }
+    }
+
     private bool ShiftExistingTilesUp(int count, ref RectInt bounds)
     {
         for (int y = bounds.yMax - 1; y >= bounds.yMin; y--)
@@ -480,24 +493,5 @@ public class Board : MonoBehaviour
         }
 
         return true;
-    }
-
-    private void CreateBottomRows(int count, RectInt bounds)
-    {
-        for (int g = 0; g < count; g++)
-        {
-            int holeColumn = garbageRng.Next(bounds.xMin, bounds.xMax);
-            for (int x = bounds.xMin; x < bounds.xMax; x++)
-            {
-                if (x == holeColumn) continue;
-
-                // Use a neutral tile: pick first tile or any
-                TileBase garbageTile = TetrisBlocks.Length > 0 ? TetrisBlocks[0].tile : null;
-                if (garbageTile != null)
-                {
-                    tilemap.SetTile(new Vector3Int(x, bounds.yMin + g, 0), garbageTile);
-                }
-            }
-        }
     }
 }

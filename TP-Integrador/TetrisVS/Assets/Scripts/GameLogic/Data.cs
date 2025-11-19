@@ -6,7 +6,6 @@ public static class Data
     public static readonly float cos = Mathf.Cos(Mathf.PI / 2f);
     public static readonly float sin = Mathf.Sin(Mathf.PI / 2f);
     public static readonly float[] RotationMatrix = new float[] { cos, sin, -sin, cos };
-
     // Make pieces following the shapes according to dictionary in a matrix
     public static readonly Dictionary<eTetrisBlockShapes, Vector2Int[]> Cells = new Dictionary<eTetrisBlockShapes, Vector2Int[]>()
     {
@@ -40,6 +39,7 @@ public static class Data
         { new Vector2Int(0, 0), new Vector2Int(-1, 0), new Vector2Int(-1,-1), new Vector2Int(0, 2), new Vector2Int(-1, 2) },
         { new Vector2Int(0, 0), new Vector2Int( 1, 0), new Vector2Int( 1, 1), new Vector2Int(0,-2), new Vector2Int( 1,-2) },
     };
+
 
     public static readonly Dictionary<eTetrisBlockShapes, Vector2Int[,]> WallKicks = new Dictionary<eTetrisBlockShapes, Vector2Int[,]>()
     {

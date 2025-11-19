@@ -44,16 +44,16 @@ public class MultiplayerManager : MonoBehaviour
     public bool CanStartGame => currentGameState == GameState.Playing;
     public bool IsGameInitialized => _gameInitialized;
 
-	/***********************************************************/
-	/*                     System methods                      */
-	/***********************************************************/
+    /***********************************************************/
+    /*                     System methods                      */
+    /***********************************************************/
 
-	private void Start()
+    private void Start()
     {
         Debug.Log($"[MultiplayerManager] Start - Role: {currentRole}, RequireClient: {requireClientToStart}");
     }
 
-	[System.Diagnostics.Conditional("UNITY_EDITOR")]
+    [System.Diagnostics.Conditional("UNITY_EDITOR")]
     public void ForceStartGame()
     {
         Debug.Log("[MultiplayerManager] Force starting game (debug)");
@@ -87,9 +87,9 @@ public class MultiplayerManager : MonoBehaviour
         if (_client != null) _client.Disconnect();
     }
 
-	/***********************************************************/
-	/*                  Notification methods                   */
-	/***********************************************************/
+    /***********************************************************/
+    /*                  Notification methods                   */
+    /***********************************************************/
 
     public void NotifyPiecePlaced()
     {
@@ -128,9 +128,9 @@ public class MultiplayerManager : MonoBehaviour
         }
     }
 
-	/***********************************************************/
-	/*                  Registration methods                   */
-	/***********************************************************/
+    /***********************************************************/
+    /*                  Registration methods                   */
+    /***********************************************************/
 
     // Register the local board adapter for multiplayer synchronization
     public void RegisterLocalAdapter(BoardMultiplayerAdapter adapter)
@@ -157,9 +157,9 @@ public class MultiplayerManager : MonoBehaviour
     }
 
 
-	/***********************************************************/
-	/*                   Host/Client methods                   */
-	/***********************************************************/
+    /***********************************************************/
+    /*                   Host/Client methods                   */
+    /***********************************************************/
 
     // Start hosting a multiplayer game
     public void HostGame()
@@ -187,7 +187,7 @@ public class MultiplayerManager : MonoBehaviour
         }
     }
 
-	// Initialize client queue based on server seed
+    // Initialize client queue based on server seed
     public void InitializeClientQueue(int serverSeed)
     {
         if (_localAdapter?.board != null) // Setup client queue
@@ -203,9 +203,9 @@ public class MultiplayerManager : MonoBehaviour
         }
     }
 
-	/***********************************************************/
-	/*                 Join/Leave Game methods                 */
-	/***********************************************************/
+    /***********************************************************/
+    /*                 Join/Leave Game methods                 */
+    /***********************************************************/
 
     // Join an existing multiplayer game
     public void JoinGame(string ip)
@@ -245,11 +245,11 @@ public class MultiplayerManager : MonoBehaviour
         Debug.Log("[MultiplayerManager] Game left.");
     }
 
-	/***********************************************************/
-	/*                  OnServerClient Methods                 */
-	/***********************************************************/
+    /***********************************************************/
+    /*                  OnServerClient Methods                 */
+    /***********************************************************/
 
-	// Handle new client connection on server
+    // Handle new client connection on server
     private void OnServerClientConnected(ClientConnection client)
     {
         connectedClients++;
@@ -290,9 +290,9 @@ public class MultiplayerManager : MonoBehaviour
         });
     }
 
-	/***********************************************************/
-	/*                    OnClient methods                     */
-	/***********************************************************/
+    /***********************************************************/
+    /*                    OnClient methods                     */
+    /***********************************************************/
 
     // Handle client disconnection from server
     private void OnClientDisconnectedFromServer()
@@ -307,9 +307,9 @@ public class MultiplayerManager : MonoBehaviour
         });
     }
 
-	/***********************************************************/
-	/*                 Hadler Messages methods                 */
-	/***********************************************************/
+    /***********************************************************/
+    /*                 Hadler Messages methods                 */
+    /***********************************************************/
 
     // Handle incoming messages on server side
     private void HandleIncomingServerSide(string raw)
@@ -431,9 +431,9 @@ public class MultiplayerManager : MonoBehaviour
         });
     }
 
-	/***********************************************************/
-	/*                  Event handlers methods                 */
-	/***********************************************************/
+    /***********************************************************/
+    /*                  Event handlers methods                 */
+    /***********************************************************/
 
     private void HandleBoardStateChanged(BoardStateMessage state)
     {
@@ -450,9 +450,9 @@ public class MultiplayerManager : MonoBehaviour
         Debug.Log("[MultiplayerManager] Game state changed");
     }
 
-	/***********************************************************/
-	/*                  Initialization methods                 */
-	/***********************************************************/
+    /***********************************************************/
+    /*                  Initialization methods                 */
+    /***********************************************************/
 
     // Queue synchronization
     private void InitializeServerQueue()
@@ -488,9 +488,9 @@ public class MultiplayerManager : MonoBehaviour
         }
     }
 
-	/***********************************************************/
-	/*                     Garbage methods                     */
-	/***********************************************************/
+    /***********************************************************/
+    /*                     Garbage methods                     */
+    /***********************************************************/
 
     // Send garbage lines to opponent
     private void SendGarbageToOpponent(int count)
@@ -509,7 +509,7 @@ public class MultiplayerManager : MonoBehaviour
         }
     }
 
-	// Compute garbage lines to send based on cleared lines
+    // Compute garbage lines to send based on cleared lines
     private int ComputeGarbageToSend(int linesCleared)
     {
         // Simple standard mapping
@@ -522,18 +522,18 @@ public class MultiplayerManager : MonoBehaviour
         }
     }
 
-	/***********************************************************/
-	/*                   Go/Stop Game methods                  */
-	/***********************************************************/
+    /***********************************************************/
+    /*                   Go/Stop Game methods                  */
+    /***********************************************************/
 
-	private void StartGame()
+    private void StartGame()
     {
         Debug.Log("[MultiplayerManager] Starting game...");
         UpdateGameState(GameState.Playing);
         ResumeGame();
     }
 
-	private void PauseGame()
+    private void PauseGame()
     {
         Debug.Log("[MultiplayerManager] Game paused - waiting for players");
 
@@ -548,7 +548,7 @@ public class MultiplayerManager : MonoBehaviour
         }
     }
 
-	private void ResumeGame()
+    private void ResumeGame()
     {
         Debug.Log("[MultiplayerManager] Game resumed");
 
@@ -563,11 +563,11 @@ public class MultiplayerManager : MonoBehaviour
         }
     }
 
-	/***********************************************************/
-	/*                    Game state methods                   */
-	/***********************************************************/
+    /***********************************************************/
+    /*                    Game state methods                   */
+    /***********************************************************/
 
-	// Trigger game state update to opponent
+    // Trigger game state update to opponent
     public void TriggerGameStateUpdate()
     {
         var msg = NetMessageFactory.Wrap("game_state", new GameStateMessage
@@ -580,7 +580,7 @@ public class MultiplayerManager : MonoBehaviour
         else if (IsClient) _client?.Send(msg);
     }  
 
-	// Update the current game state and notify clients if server
+    // Update the current game state and notify clients if server
     private void UpdateGameState(GameState newState)
     {
         if (currentGameState != newState) // Update state and notify listeners
@@ -614,11 +614,11 @@ public class MultiplayerManager : MonoBehaviour
         Debug.Log($"[Server] Broadcasting game state: {currentGameState}");
     }
 
-	/***********************************************************/
-	/*                   board state methods                   */
-	/***********************************************************/
+    /***********************************************************/
+    /*                   board state methods                   */
+    /***********************************************************/
 
-	// Trigger board state update to opponent
+    // Trigger board state update to opponent
     public void TriggerBoardStateUpdate(bool forceImmediate = false)
     {
         if (currentGameState != GameState.Playing) return;
@@ -630,7 +630,7 @@ public class MultiplayerManager : MonoBehaviour
         _lastSendTime = Time.time;
     }
 
-	// Send immediate board state to opponent
+    // Send immediate board state to opponent
     public void SendImmediateBoardState()
     {
         if (_localAdapter == null) return;
@@ -643,12 +643,12 @@ public class MultiplayerManager : MonoBehaviour
         if (IsServer) _server?.Broadcast(msg);
         else if (IsClient) _client?.Send(msg);
     }
-	
-	/***********************************************************/
-	/*                      Queue methods                      */
-	/***********************************************************/
+    
+    /***********************************************************/
+    /*                      Queue methods                      */
+    /***********************************************************/
 
-	// Broadcast current queue state to all clients
+    // Broadcast current queue state to all clients
     public void BroadcastQueueUpdate()
     {
         if (!IsServer || _localAdapter?.board?.shapesQueue == null) return;

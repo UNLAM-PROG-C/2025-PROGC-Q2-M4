@@ -17,8 +17,7 @@ public class ShapesQueue {
             setShape();
         }
     }
-
-    // Dequeue and return the next shape index, then enqueue a new shape
+// Dequeue and return the next shape index, then enqueue a new shape
     public int getShape()
     {
         int nextShape = Shapes.Dequeue();
@@ -32,8 +31,7 @@ public class ShapesQueue {
             return 0;
         return Shapes.ElementAt(position);
     }
-
-    // Enqueue a new random shape index, ensuring no immediate repeats
+// Enqueue a new random shape index, ensuring no immediate repeats
     private void setShape()
     {
         int shapeIndex = random.Next(0, TETRIS_PIECE_COUNT);

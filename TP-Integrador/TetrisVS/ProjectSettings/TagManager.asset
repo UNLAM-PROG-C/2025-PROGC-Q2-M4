@@ -39,5 +39,5 @@ TagManager:
   - 
   m_SortingLayers:
   - name: Default
-  uniqueID: 0
-  locked: 0
+    uniqueID: 0
+    locked: 0

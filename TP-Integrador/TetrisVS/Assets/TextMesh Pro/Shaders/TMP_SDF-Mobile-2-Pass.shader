@@ -6,14 +6,14 @@
 Shader "TextMeshPro/Mobile/Distance Field - 2 Pass" {
 
 Properties {
-	_FaceColor      ("Face Color", Color) = (1,1,1,1)
+	_FaceColor          ("Face Color", Color) = (1,1,1,1)
 	_FaceDilate			("Face Dilate", Range(-1,1)) = 0
 
-	_OutlineColor	  ("Outline Color", Color) = (0,0,0,1)
+	_OutlineColor	    ("Outline Color", Color) = (0,0,0,1)
 	_OutlineWidth		("Outline Thickness", Range(0,1)) = 0
 	_OutlineSoftness	("Outline Softness", Range(0,1)) = 0
 
-	_UnderlayColor	  ("Border Color", Color) = (0,0,0,.5)
+	_UnderlayColor	    ("Border Color", Color) = (0,0,0,.5)
 	_UnderlayOffsetX 	("Border OffsetX", Range(-1,1)) = 0
 	_UnderlayOffsetY 	("Border OffsetY", Range(-1,1)) = 0
 	_UnderlayDilate		("Border Dilate", Range(-1,1)) = 0
@@ -121,7 +121,7 @@ SubShader {
 		};
 
 		float _UIMaskSoftnessX;
-    float _UIMaskSoftnessY;
+        float _UIMaskSoftnessY;
 
 		pixel_t VertShader(vertex_t input)
 		{
@@ -230,11 +230,11 @@ SubShader {
 
 			#if (UNDERLAY_ON | UNDERLAY_INNER)
 			c *= input.texcoord1.z;
-		  #endif
+		    #endif
 
-		  #if UNITY_UI_ALPHACLIP
+		    #if UNITY_UI_ALPHACLIP
 			clip(c.a - 0.001);
-		  #endif
+		    #endif
 
 			return c;
 		}
@@ -283,7 +283,7 @@ SubShader {
 
 		struct vertex_t {
 			UNITY_VERTEX_INPUT_INSTANCE_ID
-      float4	vertex			: POSITION;
+            float4	vertex			: POSITION;
 			float3	normal			: NORMAL;
 			fixed4	color			: COLOR;
 			float4	texcoord0		: TEXCOORD0;
@@ -293,7 +293,7 @@ SubShader {
 		struct pixel_t {
 			UNITY_VERTEX_INPUT_INSTANCE_ID
 			UNITY_VERTEX_OUTPUT_STEREO
-      float4	vertex			: SV_POSITION;
+            float4	vertex			: SV_POSITION;
 			fixed4	faceColor		: COLOR;
 			float4	texcoord0		: TEXCOORD0;			// Texture UV, Mask UV
 			half2	param			: TEXCOORD1;			// Scale(x), BiasIn(y), BiasOut(z), Bias(w)
@@ -301,8 +301,8 @@ SubShader {
 		};
 
 		float _UIMaskSoftnessX;
-    float _UIMaskSoftnessY;
-    int _UIVertexColorAlwaysGammaSpace;
+        float _UIMaskSoftnessY;
+        int _UIVertexColorAlwaysGammaSpace;
 
 
 		pixel_t VertShader(vertex_t input)
@@ -334,10 +334,10 @@ SubShader {
 			scale /= 1 + (_OutlineSoftness * _ScaleRatioA * scale);
 			float bias = (0.5 - weight) * scale - 0.5;
 
-      if (_UIVertexColorAlwaysGammaSpace && !IsGammaSpace())
-      {
-        input.color.rgb = UIGammaToLinear(input.color.rgb);
-      }
+            if (_UIVertexColorAlwaysGammaSpace && !IsGammaSpace())
+            {
+                input.color.rgb = UIGammaToLinear(input.color.rgb);
+            }
 			float opacity = input.color.a;
 
 			fixed4 faceColor = fixed4(input.color.rgb, opacity) * _FaceColor;
@@ -368,15 +368,15 @@ SubShader {
 			half d = tex2D(_MainTex, input.texcoord0.xy).a * input.param.x;
 			half4 c = input.faceColor * saturate(d - input.param.y);
 
-		  // Alternative implementation to UnityGet2DClipping with support for softness.
+		    // Alternative implementation to UnityGet2DClipping with support for softness.
 			#if UNITY_UI_CLIP_RECT
 			half2 m = saturate((_ClipRect.zw - _ClipRect.xy - abs(input.mask.xy)) * input.mask.zw);
 			c *= m.x * m.y;
 			#endif
 
-		  #if UNITY_UI_ALPHACLIP
+		    #if UNITY_UI_ALPHACLIP
 			clip(c.a - 0.001);
-		  #endif
+		    #endif
 
 			return c;
 		}

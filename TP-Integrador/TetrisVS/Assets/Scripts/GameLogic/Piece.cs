@@ -21,8 +21,7 @@ public class Piece : MonoBehaviour
 
     private float stepTime;
     private float lockTime;
-
-    // Initialize piece state and adjust delays based on difficulty
+// Initialize piece state and adjust delays based on difficulty
     void Awake()
     {
         pieceLock = Resources.Load<AudioClip>("piece_lock");
@@ -48,6 +47,8 @@ public class Piece : MonoBehaviour
             audioSource = gameObject.AddComponent<AudioSource>();
             audioSource.loop = false;
         }
+
+
     }
 
     public void Initialize(Board board, Vector3Int spawnPos, TetrisBlockShapeData data)
@@ -105,8 +106,7 @@ public class Piece : MonoBehaviour
 
         return true;
     }
-
-    // read the key inputs and move the piece accordingly
+// read the key inputs and move the piece accordingly
     private void HandleInputLocal()
     {
         if (Time.time - lastMoveTime < moveCooldown){
@@ -173,8 +173,7 @@ public class Piece : MonoBehaviour
             StepDown();
         }
     }
-
-    // Move the piece down by one step and handle locking if it cannot move further
+// Move the piece down by one step and handle locking if it cannot move further
     private void StepDown()
     {
         TryMove(Vector3Int.down);
@@ -204,8 +203,7 @@ public class Piece : MonoBehaviour
         }
         board.Set(this);
     }
-
-    // Perform a hard drop to instantly place the piece at the lowest valid position
+// Perform a hard drop to instantly place the piece at the lowest valid position
     private void HardDrop()
     {
         board.Clear(this);
@@ -216,8 +214,7 @@ public class Piece : MonoBehaviour
         board.Set(this);
         Lock();
     }
-
-    // Lock the piece in place and notify multiplayer manager if applicable
+// Lock the piece in place and notify multiplayer manager if applicable
     private void Lock()
     {
         if (audioSource != null && pieceLock != null)
@@ -237,8 +234,7 @@ public class Piece : MonoBehaviour
 
         board.SpawnPiece();
     }
-
-    // Rotate the piece in the specified direction and handle wall kicks
+// Rotate the piece in the specified direction and handle wall kicks
     private void RotatePiece(int direction)
     {
         board.Clear(this);
@@ -327,8 +323,7 @@ public class Piece : MonoBehaviour
             return min + (input - min) % (max - min);
         }
     }
-
-    // Apply the state received from the network to synchronize piece position and shape
+// Apply the state received from the network to synchronize piece position and shape
     public void ApplyNetworkState(Vector3Int newPos, Vector3Int[] newCells, TetrisBlockShapeData shapeData)
     {
         position = newPos;

@@ -38,8 +38,7 @@ public class WaitingForPlayersUI : MonoBehaviour
             MultiplayerManager.OnClientDisconnected -= OnClientDisconnected;
         }
     }
-
-    // Update UI based on current game state    
+// Update UI based on current game state    
     private void OnGameStateChanged(GameState newState)
     {
         UpdateUI();
@@ -54,14 +53,13 @@ public class WaitingForPlayersUI : MonoBehaviour
     {
         UpdateUI();
     }
-
-    // Update the waiting panel and texts based on multiplayer state    
+// Update the waiting panel and texts based on multiplayer state    
     private void UpdateUI()
     {
         if (MultiplayerManager.Instance == null) return;
         
         bool shouldShowWaiting = MultiplayerManager.Instance.IsServer && 
-                                 MultiplayerManager.Instance.currentGameState == GameState.WaitingForPlayers;
+                                MultiplayerManager.Instance.currentGameState == GameState.WaitingForPlayers;
         
         if (waitingPanel != null)
         {

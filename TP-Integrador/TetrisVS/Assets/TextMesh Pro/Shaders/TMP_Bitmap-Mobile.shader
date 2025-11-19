@@ -1,25 +1,25 @@
 Shader "TextMeshPro/Mobile/Bitmap" {
 
 Properties {
-	_MainTex		  Font Atlas", 2D) = "white" {}
-	_Color		    xt Color", Color) = (1,1,1,1)
-	_DiffusePower	  Diffuse Power", Range(1.0,4.0)) = 1.0
+	_MainTex		    ("Font Atlas", 2D) = "white" {}
+	_Color		        ("Text Color", Color) = (1,1,1,1)
+	_DiffusePower	    ("Diffuse Power", Range(1.0,4.0)) = 1.0
 
-	_VertexOffsetX  ("Vertex OffsetX", float) = 0
-	_VertexOffsetY  ("Vertex OffsetY", float) = 0
-	_MaskSoftnessX  ("Mask SoftnessX", float) = 0
-	_MaskSoftnessY  ("Mask SoftnessY", float) = 0
+	_VertexOffsetX      ("Vertex OffsetX", float) = 0
+	_VertexOffsetY      ("Vertex OffsetY", float) = 0
+	_MaskSoftnessX      ("Mask SoftnessX", float) = 0
+	_MaskSoftnessY      ("Mask SoftnessY", float) = 0
 
-	_ClipRect    "Clip Rect", vector) = (-32767, -32767, 32767, 32767)
+	_ClipRect           ("Clip Rect", vector) = (-32767, -32767, 32767, 32767)
 
-	_StencilComp    encil Comparison", Float) = 8
-	_Stencil      cil ID", Float) = 0
-	_StencilOp    Stencil Operation", Float) = 0
+	_StencilComp        ("Stencil Comparison", Float) = 8
+	_Stencil            ("Stencil ID", Float) = 0
+	_StencilOp          ("Stencil Operation", Float) = 0
 	_StencilWriteMask   ("Stencil Write Mask", Float) = 255
-	_StencilReadMask  Stencil Read Mask", Float) = 255
+	_StencilReadMask    ("Stencil Read Mask", Float) = 255
 
-	_CullMode    "Cull Mode", Float) = 0
-	_ColorMask    Color Mask", Float) = 15
+	_CullMode           ("Cull Mode", Float) = 0
+	_ColorMask          ("Color Mask", Float) = 15
 }
 
 SubShader {
@@ -83,8 +83,8 @@ SubShader {
 		uniform float		_MaskSoftnessX;
 		uniform float		_MaskSoftnessY;
 		uniform float		_UIMaskSoftnessX;
-    orm float		_UIMaskSoftnessY;
-    orm int _UIVertexColorAlwaysGammaSpace;
+        uniform float		_UIMaskSoftnessY;
+        uniform int _UIVertexColorAlwaysGammaSpace;
 
 		v2f vert (appdata_t v)
 		{
@@ -94,11 +94,11 @@ SubShader {
 			vert.y += _VertexOffsetY;
 
 			vert.xy += (vert.w * 0.5) / _ScreenParams.xy;
-      IVertexColorAlwaysGammaSpace && !IsGammaSpace())
-      
-        rgb = UIGammaToLinear(v.color.rgb);
-      
-      rtex = UnityPixelSnap(UnityObjectToClipPos(vert));
+            if (_UIVertexColorAlwaysGammaSpace && !IsGammaSpace())
+            {
+                v.color.rgb = UIGammaToLinear(v.color.rgb);
+            }
+            OUT.vertex = UnityPixelSnap(UnityObjectToClipPos(vert));
 			OUT.color = v.color;
 			OUT.color *= _Color;
 			OUT.color.rgb *= _DiffusePower;

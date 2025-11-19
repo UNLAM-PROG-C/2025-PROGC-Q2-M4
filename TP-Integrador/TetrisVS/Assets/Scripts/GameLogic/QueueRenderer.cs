@@ -12,8 +12,7 @@ public class QueueRenderer : MonoBehaviour
 
     private bool isInitialized = false;
     private Board board;
-
-    // Initialize references and Tetris block data
+// Initialize references and Tetris block data
     void Awake()
     {
         this.tilemap = GetComponentInChildren<Tilemap>();
@@ -106,8 +105,7 @@ public class QueueRenderer : MonoBehaviour
             RenderQueue();
         }
     }
-
-    // Set a new shapes queue and refresh the rendering
+// Set a new shapes queue and refresh the rendering
     public void SetShapesQueue(SharedShapesQueue newQueue)
     {
         if (newQueue != null)
