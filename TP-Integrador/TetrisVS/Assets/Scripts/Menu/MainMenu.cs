@@ -1,47 +1,49 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using UnityEditor; // Required for EditorApplication.isPlaying
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
+
 public class MainMenu : MonoBehaviour
 {
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    public static void LoadSinglePlayerGame()
-    {
-        // Assuming the single-player game is in scene index 1
-        SceneManager.LoadScene(1);
-    }
+  // Scene index constants (replace magic numbers)
+  private const int SceneIndexMainMenu = 0;
+  private const int SceneIndexSinglePlayer = 1;
+  private const int SceneIndexSettings = 2;
+  private const int SceneIndexMultiplayerMenu = 3;
+  private const int SceneIndexMultiplayerGame = 4;
 
-    public static void ExitGame()
-    {
-        // If running in the Unity editor
-    #if UNITY_EDITOR
-                EditorApplication.isPlaying = false;
-    #else
-            // If running as a standalone build
-            Application.Quit();
-    #endif
-    }
-    public static void LoadSettingsMenu()
-    {
-        // Assuming the settings menu is in scene index 2
-        SceneManager.LoadScene(2);
-    }
+  public static void LoadSinglePlayerGame()
+  {
+    SceneManager.LoadScene(SceneIndexSinglePlayer);
+  }
 
-    public static void LoadMainMenu()
-    {
-        // Assuming the main menu is in scene index 0
-        SceneManager.LoadScene(0);
-    }
+  public static void ExitGame()
+  {
+#if UNITY_EDITOR
+    EditorApplication.isPlaying = false;
+#else
+    Application.Quit();
+#endif
+  }
 
-    public static void LoadMultiplayerMenu()
-    {
-        // Assuming the multiplayer menu is in scene index 3
-        SceneManager.LoadScene(3);
-    }
+  public static void LoadSettingsMenu()
+  {
+    SceneManager.LoadScene(SceneIndexSettings);
+  }
 
-    public static void LoadMultiplayerGame()
-    {
-        // Assuming the multiplayer game is in scene index 4
-        SceneManager.LoadScene(4);
-    }
+  public static void LoadMainMenu()
+  {
+    SceneManager.LoadScene(SceneIndexMainMenu);
+  }
 
+  public static void LoadMultiplayerMenu()
+  {
+    SceneManager.LoadScene(SceneIndexMultiplayerMenu);
+  }
+
+  public static void LoadMultiplayerGame()
+  {
+    SceneManager.LoadScene(SceneIndexMultiplayerGame);
+  }
 }

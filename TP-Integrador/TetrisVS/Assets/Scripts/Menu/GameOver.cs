@@ -1,39 +1,44 @@
+using System.Collections;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using System.Collections;
+
 public class GameOver : MonoBehaviour
 {
-    public string gameplaySceneName = "SceneSinglePlayerTetris"; 
-    public string menuSceneName = "SceneMainMenuScreen";
-    public AudioSource audioSource;
-    public AudioClip gameOverClip;
+  // Constants
+  private const string DefaultGameplaySceneName = "SceneSinglePlayerTetris";
+  private const string DefaultMenuSceneName = "SceneMainMenuScreen";
+  private const string GameOverClipResourceName = "game_over";
 
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    IEnumerator Start()
+  public string gameplaySceneName = DefaultGameplaySceneName;
+  public string menuSceneName = DefaultMenuSceneName;
+
+  public AudioSource audioSource;
+  public AudioClip gameOverClip;
+
+  private IEnumerator Start()
+  {
+    gameOverClip = Resources.Load<AudioClip>(GameOverClipResourceName);
+
+    if (audioSource == null)
     {
-        gameOverClip = Resources.Load<AudioClip>("game_over");
-        if (audioSource == null)
-        {
-            audioSource = gameObject.AddComponent<AudioSource>();
-            audioSource.loop = false; 
-        }
-        audioSource.PlayOneShot(gameOverClip);
-        yield return new WaitForSeconds(gameOverClip.length);
+      audioSource = gameObject.AddComponent<AudioSource>();
+      audioSource.loop = false;
     }
 
-    // Update is called once per frame
-    void Update()
+    if (gameOverClip != null)
     {
-        
+      audioSource.PlayOneShot(gameOverClip);
+      yield return new WaitForSeconds(gameOverClip.length);
     }
+  }
 
-    public void OnRetryButton()
-    {
-        SceneManager.LoadScene(gameplaySceneName);
-    }
+  public void OnRetryButton()
+  {
+    SceneManager.LoadScene(gameplaySceneName);
+  }
 
-    public void OnMenuButton()
-    {
-        SceneManager.LoadScene(menuSceneName);
-    }
+  public void OnMenuButton()
+  {
+    SceneManager.LoadScene(menuSceneName);
+  }
 }

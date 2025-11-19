@@ -1,96 +1,103 @@
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 public class WaitingForPlayersUI : MonoBehaviour
 {
-    [Header("UI Elements")]
-    public GameObject waitingPanel;
-    public Text statusText;
-    public Text connectedPlayersText;
-    public Button cancelButton;
-    
-    private void Start()
+  // Constants
+  private const string WaitingStatusText = "Waiting for players to join...";
+  private const string ConnectedPlayersPrefix = "Connected Players: ";
+  private const int MainMenuSceneIndex = 0;
+
+  [Header("UI Elements")]
+  public GameObject waitingPanel;
+  public Text statusText;
+  public Text connectedPlayersText;
+  public Button cancelButton;
+
+  private void Start()
+  {
+    if (MultiplayerManager.Instance != null)
     {
-        // Subscribe to multiplayer events
-        if (MultiplayerManager.Instance != null)
-        {
-            MultiplayerManager.OnGameStateUpdated += OnGameStateChanged;
-            MultiplayerManager.OnClientConnected += OnClientConnected;
-            MultiplayerManager.OnClientDisconnected += OnClientDisconnected;
-        }
-        
-        // Setup cancel button
-        if (cancelButton != null)
-        {
-            cancelButton.onClick.AddListener(OnCancelClicked);
-        }
-        
-        UpdateUI();
+      MultiplayerManager.OnGameStateUpdated += OnGameStateChanged;
+      MultiplayerManager.OnClientConnected += OnClientConnected;
+      MultiplayerManager.OnClientDisconnected += OnClientDisconnected;
     }
 
-    private void OnDestroy()
+    if (cancelButton != null)
     {
-        // Unsubscribe from events
-        if (MultiplayerManager.Instance != null)
-        {
-            MultiplayerManager.OnGameStateUpdated -= OnGameStateChanged; 
-            MultiplayerManager.OnClientConnected -= OnClientConnected;
-            MultiplayerManager.OnClientDisconnected -= OnClientDisconnected;
-        }
+      cancelButton.onClick.AddListener(OnCancelClicked);
     }
-// Update UI based on current game state    
-    private void OnGameStateChanged(GameState newState)
+
+    UpdateUI();
+  }
+
+  private void OnDestroy()
+  {
+    if (MultiplayerManager.Instance != null)
     {
-        UpdateUI();
+      MultiplayerManager.OnGameStateUpdated -= OnGameStateChanged;
+      MultiplayerManager.OnClientConnected -= OnClientConnected;
+      MultiplayerManager.OnClientDisconnected -= OnClientDisconnected;
     }
-    
-    private void OnClientConnected()
+  }
+
+  private void OnGameStateChanged(GameState newState)
+  {
+    UpdateUI();
+  }
+
+  private void OnClientConnected()
+  {
+    UpdateUI();
+  }
+
+  private void OnClientDisconnected()
+  {
+    UpdateUI();
+  }
+
+  private void UpdateUI()
+  {
+    if (MultiplayerManager.Instance == null)
     {
-        UpdateUI();
+      return;
     }
-    
-    private void OnClientDisconnected()
+
+    bool shouldShow =
+      MultiplayerManager.Instance.IsServer &&
+      MultiplayerManager.Instance.currentGameState == GameState.WaitingForPlayers;
+
+    if (waitingPanel != null)
     {
-        UpdateUI();
+      waitingPanel.SetActive(shouldShow);
     }
-// Update the waiting panel and texts based on multiplayer state    
-    private void UpdateUI()
+
+    if (!shouldShow)
     {
-        if (MultiplayerManager.Instance == null) return;
-        
-        bool shouldShowWaiting = MultiplayerManager.Instance.IsServer && 
-                                MultiplayerManager.Instance.currentGameState == GameState.WaitingForPlayers;
-        
-        if (waitingPanel != null)
-        {
-            waitingPanel.SetActive(shouldShowWaiting);
-        }
-        
-        if (shouldShowWaiting)
-        {
-            if (statusText != null)
-            {
-                statusText.text = "Waiting for players to join...";
-            }
-            
-            if (connectedPlayersText != null)
-            {
-                connectedPlayersText.text = $"Connected Players: {GetConnectedPlayersCount()}";
-            }
-        }
+      return;
     }
-    
-    private int GetConnectedPlayersCount()
+
+    if (statusText != null)
     {
-        // This would need to be exposed from MultiplayerManager
-        // For now, return 1 if server is running
-        return MultiplayerManager.Instance.IsServer ? 1 : 0;
+      statusText.text = WaitingStatusText;
     }
-    
-    private void OnCancelClicked()
+
+    if (connectedPlayersText != null)
     {
-        MultiplayerManager.Instance?.LeaveGame();
-        // Return to main menu or previous scene
-        UnityEngine.SceneManagement.SceneManager.LoadScene(0);
+      connectedPlayersText.text = ConnectedPlayersPrefix + GetConnectedPlayersCount();
     }
+  }
+
+  private int GetConnectedPlayersCount()
+  {
+    // Placeholder: update when MultiplayerManager exposes real player count
+    return MultiplayerManager.Instance.IsServer ? 1 : 0;
+  }
+
+  private void OnCancelClicked()
+  {
+    MultiplayerManager.Instance?.LeaveGame();
+    SceneManager.LoadScene(MainMenuSceneIndex);
+  }
 }
