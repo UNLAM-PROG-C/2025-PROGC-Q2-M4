@@ -6,92 +6,95 @@ using UnityEngine;
 [Serializable]
 public class QueueStateMessage
 {
-    public int[] upcomingShapes;
-    public int currentIndex;
-    public int seed;
+  public int[] upcomingShapes;
+  public int currentIndex;
+  public int seed;
 }
-// Manages a shared queue of Tetris shapes for multiplayer synchronization
+
+/// <summary>
+/// Manages a shared queue of Tetris shapes for multiplayer synchronization.
+/// </summary>
 public class SharedShapesQueue
 {
-    private Queue<int> shapes = new Queue<int>();
-    private System.Random random;
-    private const int TETRIS_PIECE_COUNT = 7;
-    private const int QUEUE_SIZE = 14;
+  private const int TetrisPieceCount = 7;
+  private const int InitialQueueSize = 14;
 
-    public int Seed { get; private set; }
+  private readonly Queue<int> _shapes = new Queue<int>();
+  private System.Random _random;
 
-    public SharedShapesQueue()
+  public int Seed { get; private set; }
+
+  public SharedShapesQueue()
+  {
+    Seed = Environment.TickCount;
+    InitializeWithSeed(Seed);
+  }
+
+  public SharedShapesQueue(int seed)
+  {
+    InitializeWithSeed(seed);
+  }
+
+  private void InitializeWithSeed(int seed)
+  {
+    Seed = seed;
+    _random = new System.Random(seed);
+    _shapes.Clear();
+
+    for (int i = 0; i < InitialQueueSize; i++)
     {
-        Seed = Environment.TickCount;
-        InitializeWithSeed(Seed);
+      SetShape();
+    }
+  }
+
+  public int GetShape()
+  {
+    int nextShape = _shapes.Dequeue();
+    SetShape();
+    return nextShape;
+  }
+
+  public int PeekShape(int position)
+  {
+    if (position < 0 || position >= _shapes.Count) return 0;
+    return _shapes.ElementAt(position);
+  }
+
+  private void SetShape()
+  {
+    int shapeIndex = _random.Next(0, TetrisPieceCount);
+
+    if (_shapes.Count > 0)
+    {
+      while (shapeIndex == _shapes.Last())
+      {
+        shapeIndex = _random.Next(0, TetrisPieceCount);
+      }
     }
 
-    public SharedShapesQueue(int seed)
-    {
-        InitializeWithSeed(seed);
-    }
-// Initialize the queue with a specific seed
-    private void InitializeWithSeed(int seed)
-    {
-        Seed = seed;
-        random = new System.Random(seed);
-        shapes.Clear();
+    _shapes.Enqueue(shapeIndex);
+  }
 
-        for (int i = 0; i < QUEUE_SIZE; i++)
-        {
-            SetShape();
-        }
-    }
-
-    public int GetShape()
+  public QueueStateMessage GetQueueState()
+  {
+    return new QueueStateMessage
     {
-        int nextShape = shapes.Dequeue();
-        SetShape();
-        return nextShape;
+      upcomingShapes = _shapes.ToArray(),
+      seed = Seed
+    };
+  }
+
+  public void ApplyQueueState(QueueStateMessage state)
+  {
+    if (state.seed != Seed)
+    {
+      InitializeWithSeed(state.seed);
     }
 
-    public int PeekShape(int position)
+    _shapes.Clear();
+    foreach (int shape in state.upcomingShapes)
     {
-        if (position < 0 || position >= shapes.Count)
-            return 0;
-        return shapes.ElementAt(position);
+      _shapes.Enqueue(shape);
     }
-// Add a new shape to the queue ensuring no immediate repeats
-    private void SetShape()
-    {
-        int shapeIndex = random.Next(0, TETRIS_PIECE_COUNT);
-
-        if (shapes.Count > 0)
-        {
-            while (shapeIndex == shapes.Last())
-            {
-                shapeIndex = random.Next(0, TETRIS_PIECE_COUNT);
-            }
-        }
-
-        shapes.Enqueue(shapeIndex);
-    }
-// Get the current state of the shape queue
-    public QueueStateMessage GetQueueState()
-    {
-        return new QueueStateMessage
-        {// Serialize upcoming shapes and seed
-            upcomingShapes = shapes.ToArray(),
-            seed = Seed
-        };
-    }
-// Apply a received queue state to synchronize shapes
-    public void ApplyQueueState(QueueStateMessage state)
-    {
-        if (state.seed != Seed)
-        {
-            InitializeWithSeed(state.seed);
-        }
-
-        shapes.Clear();
-        foreach (int shape in state.upcomingShapes)
-        {// Rebuild the queue from the received state
-            shapes.Enqueue(shape);
-        }
-    }
+  }
 }

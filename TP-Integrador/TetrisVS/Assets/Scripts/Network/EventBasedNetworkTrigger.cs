@@ -1,36 +1,23 @@
 using UnityEngine;
 
 /// <summary>
-/// Helper component to integrate with existing game logic and trigger network events
-/// Add this to your Piece prefab or game objects that need to trigger network updates
+/// Helper component to integrate with existing game logic and trigger network events.
+/// Add this to objects (e.g., Piece prefab) that need to notify multiplayer system.
 /// </summary>
 public class EventBasedNetworkTrigger : MonoBehaviour
 {
-    private BoardMultiplayerAdapter adapter;
+  private BoardMultiplayerAdapter _adapter;
 
-    private void Start()
-    {
-        adapter = FindObjectOfType<BoardMultiplayerAdapter>();
-    }
+  private void Start()
+  {
+    _adapter = FindObjectOfType<BoardMultiplayerAdapter>();
+  }
 
-    // Call these methods from your existing game logic (Board.cs, Piece.cs, etc.)
-    public void OnPiecePlaced()
-    {
-        adapter?.NotifyPiecePlaced();
-    }
+  public void OnPiecePlaced() => _adapter?.NotifyPiecePlaced();
 
-    public void OnPieceMoved()
-    {
-        adapter?.NotifyPieceMoved(); 
-    }
+  public void OnPieceMoved() => _adapter?.NotifyPieceMoved();
 
-    public void OnPieceRotated()
-    {
-        adapter?.NotifyPieceRotated();
-    }
+  public void OnPieceRotated() => _adapter?.NotifyPieceRotated();
 
-    public void OnLinesCleared(int count)
-    {
-        adapter?.NotifyLinesCleared(count);
-    }
+  public void OnLinesCleared(int count) => _adapter?.NotifyLinesCleared(count);
 }

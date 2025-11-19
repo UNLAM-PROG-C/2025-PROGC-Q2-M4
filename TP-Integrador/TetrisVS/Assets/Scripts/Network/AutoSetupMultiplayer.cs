@@ -1,76 +1,95 @@
 using UnityEngine;
 using UnityEngine.Tilemaps;
-// Automatically sets up multiplayer components in the scene
+
+/// <summary>
+/// Automatically sets up multiplayer components in the scene.
+/// </summary>
 public class AutoSetupMultiplayer : MonoBehaviour
 {
-    public GameObject remoteBoardPrefab;
-    public Vector3 remoteBoardOffset = new Vector3(14f, 0f, 0f);
-    public TetrisBlockShapeData[] tetrisBlocksForRemote;
+  private const string MultiplayerManagerObjectName = "MultiplayerManager";
+  private const string OpponentBoardRootName = "OpponentBoardRoot";
+  private const string TilemapObjectName = "Tilemap";
+  private const string DebugOverlayObjectName = "DebugOverlay";
 
-    private void Start()
+  private static readonly Vector3 DefaultRemoteBoardOffset = new Vector3(14f, 0f, 0f);
+
+  [Header("Remote Board")]
+  public GameObject remoteBoardPrefab;
+  public Vector3 remoteBoardOffset = DefaultRemoteBoardOffset;
+  public TetrisBlockShapeData[] tetrisBlocksForRemote;
+
+  private void Start()
+  {
+    if (MultiplayerManager.Instance == null)
     {
-        if (MultiplayerManager.Instance == null)
-        {// Create MultiplayerManager if it doesn't exist
-            var mm = new GameObject("MultiplayerManager");
-            mm.AddComponent<MultiplayerManager>();
-        }
-// Setup local board and remote view
-        Board localBoard = FindObjectOfType<Board>();
-        if (localBoard == null)
-        {
-            Debug.LogError("[AutoSetupMultiplayer] No Board encontrado.");
-            return;
-        }
-
-        // Adapter
-        var adapter = localBoard.GetComponent<BoardMultiplayerAdapter>(); 
-        if (adapter == null)
-        {
-            adapter = localBoard.gameObject.AddComponent<BoardMultiplayerAdapter>();
-        }
-        MultiplayerManager.Instance.RegisterLocalAdapter(adapter);
-
-        // Remote view
-        var remoteView = FindObjectOfType<RemoteBoardView>();
-        if (remoteView == null)
-        {
-            remoteView = CreateRemote(remoteBoardOffset + localBoard.transform.position);
-            Debug.Log("[AutoSetupMultiplayer] RemoteBoardView creado.");
-        }
-
-        if (remoteView.TetrisBlocks == null || remoteView.TetrisBlocks.Length == 0)
-        {
-            remoteView.TetrisBlocks = (tetrisBlocksForRemote != null && tetrisBlocksForRemote.Length > 0)
-                ? tetrisBlocksForRemote
-                : localBoard.TetrisBlocks;
-        }
-        MultiplayerManager.Instance.RegisterRemoteView(remoteView);
-
-        // Debug overlay
-        if (FindObjectOfType<DebugOverlay>() == null)
-        {
-            var dbg = new GameObject("DebugOverlay");
-            dbg.AddComponent<DebugOverlay>();
-        }
+      var mm = new GameObject(MultiplayerManagerObjectName);
+      mm.AddComponent<MultiplayerManager>();
     }
-// Create a remote board view at the specified position
-    private RemoteBoardView CreateRemote(Vector3 pos)
+
+    var localBoard = FindObjectOfType<Board>();
+    if (localBoard == null)
     {
-        GameObject root;
-        if (remoteBoardPrefab != null)
-            root = Instantiate(remoteBoardPrefab, pos, Quaternion.identity); 
-        else
-        { // Create basic remote board structure
-            root = new GameObject("OpponentBoardRoot");
-            root.transform.position = pos;
-            root.AddComponent<Grid>();
-            var tgo = new GameObject("Tilemap");
-            tgo.transform.SetParent(root.transform, false);
-            tgo.AddComponent<Tilemap>();
-            tgo.AddComponent<TilemapRenderer>();
-        }
-        var rv = root.GetComponent<RemoteBoardView>();
-        if (rv == null) rv = root.AddComponent<RemoteBoardView>();
-        return rv;
+      Debug.LogError("[AutoSetupMultiplayer] No Board encontrado.");
+      return;
     }
+
+    var adapter = localBoard.GetComponent<BoardMultiplayerAdapter>();
+    if (adapter == null)
+    {
+      adapter = localBoard.gameObject.AddComponent<BoardMultiplayerAdapter>();
+    }
+    MultiplayerManager.Instance.RegisterLocalAdapter(adapter);
+
+    var remoteView = FindObjectOfType<RemoteBoardView>();
+    if (remoteView == null)
+    {
+      remoteView = CreateRemote(remoteBoardOffset + localBoard.transform.position);
+      Debug.Log("[AutoSetupMultiplayer] RemoteBoardView creado.");
+    }
+
+    if (remoteView.TetrisBlocks == null || remoteView.TetrisBlocks.Length == 0)
+    {
+      remoteView.TetrisBlocks = (tetrisBlocksForRemote != null && tetrisBlocksForRemote.Length > 0)
+        ? tetrisBlocksForRemote
+        : localBoard.TetrisBlocks;
+    }
+
+    MultiplayerManager.Instance.RegisterRemoteView(remoteView);
+
+    if (FindObjectOfType<DebugOverlay>() == null)
+    {
+      var dbg = new GameObject(DebugOverlayObjectName);
+      dbg.AddComponent<DebugOverlay>();
+    }
+  }
+
+  /// <summary>
+  /// Creates a remote board view at the specified position.
+  /// </summary>
+  private RemoteBoardView CreateRemote(Vector3 position)
+  {
+    GameObject root;
+    if (remoteBoardPrefab != null)
+    {
+      root = Instantiate(remoteBoardPrefab, position, Quaternion.identity);
+    }
+    else
+    {
+      root = new GameObject(OpponentBoardRootName);
+      root.transform.position = position;
+      root.AddComponent<Grid>();
+
+      var tgo = new GameObject(TilemapObjectName);
+      tgo.transform.SetParent(root.transform, false);
+      tgo.AddComponent<Tilemap>();
+      tgo.AddComponent<TilemapRenderer>();
+    }
+
+    var rv = root.GetComponent<RemoteBoardView>();
+    if (rv == null)
+    {
+      rv = root.AddComponent<RemoteBoardView>();
+    }
+    return rv;
+  }
 }

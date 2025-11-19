@@ -1,36 +1,50 @@
 using System;
 using System.Collections.Concurrent;
 using UnityEngine;
-// Dispatcher to execute actions on the main Unity thread
+
+/// <summary>
+/// Dispatcher to execute actions on the main Unity thread.
+/// </summary>
 public class ThreadDispatcher : MonoBehaviour
 {
-    private static ThreadDispatcher _instance;
-    public static ThreadDispatcher Instance
+  private static ThreadDispatcher _instance;
+
+  public static ThreadDispatcher Instance
+  {
+    get
     {
-        get
-        {
-            if (_instance == null)
-            {// Create a new GameObject to hold the dispatcher
-                var go = new GameObject("ThreadDispatcher");
-                _instance = go.AddComponent<ThreadDispatcher>();
-                DontDestroyOnLoad(go);
-            }
-            return _instance;
-        }
+      if (_instance == null)
+      {
+        var go = new GameObject("ThreadDispatcher");
+        _instance = go.AddComponent<ThreadDispatcher>();
+        DontDestroyOnLoad(go);
+      }
+      return _instance;
     }
-// Queue to hold actions to be executed on the main thread
-    private readonly ConcurrentQueue<Action> _q = new ConcurrentQueue<Action>();
-// Enqueue an action to be executed on the main thread
-    public void Enqueue(Action a)
+  }
+
+  private readonly ConcurrentQueue<Action> _queue = new ConcurrentQueue<Action>();
+
+  public void Enqueue(Action action)
+  {
+    if (action != null)
     {
-        if (a != null) _q.Enqueue(a);
+      _queue.Enqueue(action);
     }
-// Execute queued actions each frame
-    private void Update()
+  }
+
+  private void Update()
+  {
+    while (_queue.TryDequeue(out var act))
     {
-        while (_q.TryDequeue(out var act))
-        {
-            try { act(); } catch (Exception ex) { Debug.LogError(ex); }
-        }
+      try
+      {
+        act();
+      }
+      catch (Exception ex)
+      {
+        Debug.LogError(ex);
+      }
     }
+  }
 }
