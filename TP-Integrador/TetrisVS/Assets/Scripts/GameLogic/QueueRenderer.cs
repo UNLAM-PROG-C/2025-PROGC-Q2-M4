@@ -1,117 +1,121 @@
 using UnityEngine;
 using UnityEngine.Tilemaps;
-// Renders the upcoming Tetris pieces queue on the tilemap
+
 public class QueueRenderer : MonoBehaviour
 {
-    public SharedShapesQueue shapesQueue;
-    public Tilemap tilemap { get; private set; }
-    public TetrisBlockShapeData[] TetrisBlocks;
-    public Vector3Int spawnPos;
-    public Vector2Int boardBoundsSize = new Vector2Int(4, 20);
-    public int queueRenderSize = 5;
+  private const int DefaultQueueRenderSize = 5;
+  private const int QueueVerticalSpacing = 4;
+  private const int SpawnYOffset = 1;
 
-    private bool isInitialized = false;
-    private Board board;
-// Initialize references and Tetris block data
-    void Awake()
+  public SharedShapesQueue shapesQueue;
+  public Tilemap tilemap { get; private set; }
+  public TetrisBlockShapeData[] TetrisBlocks;
+  public Vector3Int spawnPos;
+  public Vector2Int boardBoundsSize = new Vector2Int(4, 20);
+  public int queueRenderSize = DefaultQueueRenderSize;
+
+  private bool isInitialized;
+  private Board board;
+
+  private void Awake()
+  {
+    tilemap = GetComponentInChildren<Tilemap>();
+    board = FindObjectOfType<Board>();
+
+    if (TetrisBlocks == null || TetrisBlocks.Length == 0)
     {
-        this.tilemap = GetComponentInChildren<Tilemap>();
-        this.board = FindObjectOfType<Board>();
-
-        if (TetrisBlocks == null || TetrisBlocks.Length == 0)
-        {
-            Debug.LogError("QueueRenderer: TetrisBlocks array is null or empty! Please assign Tetris block data in the inspector.");
-            return;
-        }
-
-        for (int i = 0; i < this.TetrisBlocks.Length; i++)
-        {
-            if (TetrisBlocks[i].tile != null)
-            {
-                this.TetrisBlocks[i].Initialize();
-            }
-            else
-            {
-                Debug.LogError($"QueueRenderer: TetrisBlocks[{i}].tile is NULL!");
-            }
-        }
-
-        isInitialized = true;
+      Debug.LogError("QueueRenderer: TetrisBlocks array is null or empty.");
+      return;
     }
 
-    void Start()
+    for (int i = 0; i < TetrisBlocks.Length; i++)
     {
-        if (board != null && board.shapesQueue != null)
-        {
-            shapesQueue = board.shapesQueue;
-        }
+      if (TetrisBlocks[i].tile != null)
+      {
+        TetrisBlocks[i].Initialize();
+      }
+      else
+      {
+        Debug.LogError($"QueueRenderer: TetrisBlocks[{i}].tile is NULL!");
+      }
     }
 
-    void Update()
+    isInitialized = true;
+  }
+
+  private void Start()
+  {
+    if (board != null && board.shapesQueue != null)
     {
-        if (isInitialized && shapesQueue != null)
-        {
-            RenderQueue();
-        }
+      shapesQueue = board.shapesQueue;
+    }
+  }
+
+  private void Update()
+  {
+    if (isInitialized && shapesQueue != null)
+    {
+      RenderQueue();
+    }
+  }
+
+  public void RenderQueue()
+  {
+    if (!isInitialized ||
+        tilemap == null ||
+        TetrisBlocks == null ||
+        TetrisBlocks.Length == 0 ||
+        queueRenderSize <= 0 ||
+        shapesQueue == null)
+    {
+      return;
     }
 
-    public void RenderQueue()
+    tilemap.ClearAllTiles();
+
+    for (int y = 0; y < queueRenderSize; y++)
     {
-        if (!isInitialized ||
-            this.tilemap == null ||
-            this.TetrisBlocks == null ||
-            this.TetrisBlocks.Length == 0 ||
-            queueRenderSize <= 0 ||
-            shapesQueue == null)
-        {
-            return;
-        }
+      int shapeIndex = shapesQueue.PeekShape(y);
+      if (shapeIndex >= 0 && shapeIndex < TetrisBlocks.Length)
+      {
+        RenderPieceInQueue(y, shapeIndex);
+      }
+    }
+  }
 
-        this.tilemap.ClearAllTiles();
+  private void RenderPieceInQueue(int queueIndex, int shapeIndex)
+  {
+    TetrisBlockShapeData blockData = TetrisBlocks[shapeIndex];
 
-        for (int y = 0; y < queueRenderSize; y++)
-        {
-            int shapeIndex = shapesQueue.PeekShape(y);
-
-            if (shapeIndex >= 0 && shapeIndex < TetrisBlocks.Length)
-            {
-                RenderPieceInQueue(y, shapeIndex);
-            }
-        }
+    if (blockData.tile == null || blockData.cells == null)
+    {
+      return;
     }
 
-    private void RenderPieceInQueue(int y, int shapeIndex)
+    for (int i = 0; i < blockData.cells.Length; i++)
     {
-        TetrisBlockShapeData blockData = this.TetrisBlocks[shapeIndex];
+      Vector3Int tilePosition =
+        (Vector3Int)blockData.cells[i] +
+        new Vector3Int(spawnPos.x, spawnPos.y + SpawnYOffset + queueIndex * QueueVerticalSpacing, spawnPos.z);
 
-        if (blockData.tile == null || blockData.cells == null)
-        {
-            return;
-        }
-
-        for (int i = 0; i < blockData.cells.Length; i++)
-        {
-            Vector3Int tilePosition = (Vector3Int)blockData.cells[i] + new Vector3Int(spawnPos[0], spawnPos[1] + 1 + y * 4, spawnPos[2]);
-            this.tilemap.SetTile(tilePosition, blockData.tile);
-        }
-
-        return;
+      tilemap.SetTile(tilePosition, blockData.tile);
     }
+  }
 
-    public void RefreshQueue()
+  public void RefreshQueue()
+  {
+    if (isInitialized)
     {
-        if (isInitialized)
-        {
-            RenderQueue();
-        }
+      RenderQueue();
     }
-// Set a new shapes queue and refresh the rendering
-    public void SetShapesQueue(SharedShapesQueue newQueue)
+  }
+
+  public void SetShapesQueue(SharedShapesQueue newQueue)
+  {
+    if (newQueue != null)
     {
-        if (newQueue != null)
-        {
-            shapesQueue = newQueue;
-            RefreshQueue();
-        }
+      shapesQueue = newQueue;
+      RefreshQueue();
     }
+  }
 }

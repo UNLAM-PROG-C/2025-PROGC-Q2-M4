@@ -1,497 +1,486 @@
+using System;
 using UnityEngine;
-using UnityEngine.Tilemaps;
 using UnityEngine.SceneManagement;
-using System.Collections;
+using UnityEngine.Tilemaps;
 
 public class Board : MonoBehaviour
 {
-    public Tilemap tilemap { get; private set; }
-    public TetrisBlockShapeData[] TetrisBlocks;
-    public Piece activePiece { get; private set; }
-    public Vector3Int spawnPos;
-    public Vector2Int boardBoundsSize = new Vector2Int(10, 20);
-    public SharedShapesQueue shapesQueue; // Shared queue
-    public MultiplayerManager multiplayerManager;
+  // Constants (replace magic numbers)
+  private const int DefaultBoardWidth = 10;
+  private const int DefaultBoardHeight = 20;
+  private const int LinesPerLevel = 10;
+  private const int ScoreSingleLine = 40;
+  private const int ScoreDoubleLine = 100;
+  private const int ScoreTripleLine = 300;
+  private const int ScoreTetrisLine = 1200;
+  private const int MaxGarbageApplyPerLockDefault = 8;
+  private const int GameOverSceneIndex = 5;
 
-    public Score scoreUI; // Reference to Score UI component
+  public Tilemap tilemap { get; private set; }
+  public TetrisBlockShapeData[] TetrisBlocks;
+  public Piece activePiece { get; private set; }
+  public Vector3Int spawnPos;
+  public Vector2Int boardBoundsSize = new Vector2Int(DefaultBoardWidth, DefaultBoardHeight);
 
-    //Audio
-    public AudioSource audioSource;
-    public AudioSource musicSource; 
-    private AudioClip lineClearClip;
-    
-    private AudioClip bgMusic; //Background music
+  public SharedShapesQueue shapesQueue; // Shared queue
+  public MultiplayerManager multiplayerManager;
+  public Score scoreUI;
 
-    // Game state tracking
-    public int score = 0;
-    public int linesCleared = 0;
-    public int level = 1;
-    public bool gameOver = false;
+  // Audio
+  public AudioSource audioSource;
+  public AudioSource musicSource;
+  private AudioClip lineClearClip;
+  private AudioClip bgMusic;
 
-    // Garbage system
-    private int pendingGarbageLines = 0;
-    private System.Random garbageRng = new System.Random();
-    public int maxGarbageApplyPerLock = 8; // safety cap to avoid extreme spikes
+  // Game state
+  public int score = 0;
+  public int linesCleared = 0;
+  public int level = 1;
+  public bool gameOver = false;
 
-    public RectInt Bounds
+  // Garbage system
+  private int pendingGarbageLines = 0;
+  private readonly System.Random garbageRng = new System.Random();
+  public int maxGarbageApplyPerLock = MaxGarbageApplyPerLockDefault; // safety cap
+
+  public RectInt Bounds
+  {
+    get
     {
-        get
-        {
-            Vector2Int position = new Vector2Int(-this.boardBoundsSize.x / 2, -this.boardBoundsSize.y / 2);
-            return new RectInt(position, this.boardBoundsSize);
-        }
+      Vector2Int position = new Vector2Int(-boardBoundsSize.x / 2, -boardBoundsSize.y / 2);
+      return new RectInt(position, boardBoundsSize);
     }
-// Initialization board and pieces
-    private void Awake()
+  }
+
+  private void Awake()
+  {
+    tilemap = GetComponentInChildren<Tilemap>();
+    activePiece = GetComponentInChildren<Piece>();
+
+    InitializeAudio();
+
+    if (TetrisBlocks == null || TetrisBlocks.Length == 0)
     {
-        this.tilemap = GetComponentInChildren<Tilemap>();
-        this.activePiece = GetComponentInChildren<Piece>();
-
-        //Sounds initialization
-        InitializeAudio();
-
-        Debug.Log($"Board Awake: TetrisBlocks is {(TetrisBlocks != null ? "not null" : "NULL")}");
-        Debug.Log($"Board Awake: TetrisBlocks.Length = {(TetrisBlocks != null ? TetrisBlocks.Length : 0)}");
-
-        if (TetrisBlocks == null || TetrisBlocks.Length == 0)
-        {
-            Debug.LogError("Board: TetrisBlocks array is null or empty! Please assign Tetris block data in the inspector.");
-            return;
-        }
-
-        InitializeTetrisBlocks();
-
-        // Initialize queue - will be overridden by multiplayer manager if needed
-        if (shapesQueue == null)
-        {
-            shapesQueue = new SharedShapesQueue();
-        }
+      Debug.LogError("Board: TetrisBlocks array is null or empty! Assign in inspector.");
+      return;
     }
 
-    private void InitializeTetrisBlocks()
+    InitializeTetrisBlocks();
+
+    if (shapesQueue == null)
     {
-        for (int i = 0; i < this.TetrisBlocks.Length; i++)
-        {
-            if (TetrisBlocks[i].tile != null)
-            {
-                this.TetrisBlocks[i].Initialize();
-            }
-            else
-            {
-                Debug.LogError($"TetrisBlocks[{i}].tile is NULL!");
-            }
-        }
+      shapesQueue = new SharedShapesQueue();
+    }
+  }
+
+  private void InitializeTetrisBlocks()
+  {
+    for (int i = 0; i < TetrisBlocks.Length; i++)
+    {
+      if (TetrisBlocks[i].tile != null)
+      {
+        TetrisBlocks[i].Initialize();
+      }
+      else
+      {
+        Debug.LogError($"TetrisBlocks[{i}].tile is NULL!");
+      }
+    }
+  }
+
+  private void InitializeAudio()
+  {
+    lineClearClip = Resources.Load<AudioClip>("clear_line");
+    if (audioSource == null)
+    {
+      audioSource = gameObject.AddComponent<AudioSource>();
+      audioSource.loop = false;
     }
 
-    private void InitializeAudio()
+    bgMusic = Resources.Load<AudioClip>("music_bradinsky");
+    if (musicSource == null)
     {
-        lineClearClip = Resources.Load<AudioClip>("clear_line");
-        if (audioSource == null)
-        {
-            audioSource = gameObject.AddComponent<AudioSource>();
-            audioSource.loop = false;
-        }
+      musicSource = gameObject.AddComponent<AudioSource>();
+      musicSource.loop = true;
+    }
+  }
 
-        bgMusic = Resources.Load<AudioClip>("music_bradinsky");
-        if (musicSource == null)
-        {
-            musicSource = gameObject.AddComponent<AudioSource>();
-            musicSource.loop = true;
-        }
+  private void Start()
+  {
+    if (TetrisBlocks != null && TetrisBlocks.Length > 0)
+    {
+      scoreUI = FindObjectOfType<Score>();
+      musicSource.clip = bgMusic;
+      musicSource.Play();
+      SpawnPiece();
+    }
+    else
+    {
+      Debug.LogError("Board: Cannot spawn piece - TetrisBlocks not initialized!");
+    }
+  }
+
+  public void SpawnPiece()
+  {
+    if (gameOver)
+    {
+      Debug.Log("Board: Cannot spawn piece - game is over.");
+      return;
     }
 
-    // Start the game by spawning the first piece
-    private void Start()
+    if (TetrisBlocks == null || TetrisBlocks.Length == 0)
     {
-        if (TetrisBlocks != null && TetrisBlocks.Length > 0)
-        {
-            scoreUI = FindObjectOfType<Score>();
-            musicSource.clip = bgMusic;
-            musicSource.Play();
-            SpawnPiece();
-        }
-        else
-        {
-            Debug.LogError("Board: Cannot spawn piece - TetrisBlocks not properly initialized!");
-        }
+      Debug.LogError("Board: Cannot spawn piece - TetrisBlocks empty.");
+      return;
     }
 
-    public void SpawnPiece()
+    int shapeIndex = shapesQueue.GetShape();
+
+    if (shapeIndex < 0 || shapeIndex >= TetrisBlocks.Length)
     {
-        if (gameOver)
-        {
-            Debug.Log("Board: Cannot spawn piece - game is over!");
-            return;
-        }
-
-        if (TetrisBlocks == null || TetrisBlocks.Length == 0)
-        {
-            Debug.LogError("Board: Cannot spawn piece - TetrisBlocks array is null or empty!");
-            return;
-        }
-
-        int shapeIndex = shapesQueue.GetShape(); // Get next shape from shared queue
-
-        if (shapeIndex < 0 || shapeIndex >= TetrisBlocks.Length) 
-        {
-            Debug.LogError($"Invalid shape index: {shapeIndex}, TetrisBlocks.Length: {TetrisBlocks.Length}");
-            shapeIndex = 0;
-
-            if (shapeIndex >= TetrisBlocks.Length)
-            {
-                Debug.LogError("Board: Cannot spawn piece - no valid shapes available!");
-                return;
-            }
-        }
-
-        TetrisBlockShapeData data = this.TetrisBlocks[shapeIndex]; // Safe access after validation
-
-        if (data.tile == null) 
-        {
-            Debug.LogError($"Board: TetrisBlocks[{shapeIndex}] has null tile!");
-            return;
-        }
-
-        this.activePiece.Initialize(this, spawnPos, data); // Initialize piece with selected shape
-
-        if (IsValidPosition(this.activePiece, this.spawnPos))
-        {
-            Set(this.activePiece); // Place piece on board
-        }
-        else
-        {
-            GameOver();
-        }
-
-        // Notify multiplayer manager of queue change
-        if (MultiplayerManager.Instance != null && MultiplayerManager.Instance.IsServer)
-        {
-            MultiplayerManager.Instance.BroadcastQueueUpdate();
-        }
-    }
-
-    // Synchronize queue from server
-    public void SynchronizeQueue(QueueStateMessage queueState)
-    {
-        if (shapesQueue == null)
-        {
-            shapesQueue = new SharedShapesQueue(queueState.seed);
-        }
-        shapesQueue.ApplyQueueState(queueState);
-        Debug.Log($"Board: Queue synchronized with {queueState.upcomingShapes.Length} shapes");
-    }
-// Place pieces on the board
-    public void Set(Piece piece)
-    {
-        for (int i = 0; i < piece.cells.Length; i++)
-        {
-            Vector3Int tilePosition = piece.cells[i] + piece.position;
-            this.tilemap.SetTile(tilePosition, piece.TBSData.tile);
-        }
-    }
-// Remove pieces from the board
-    public void Clear(Piece piece)
-    {
-        for (int i = 0; i < piece.cells.Length; i++)
-        {
-            Vector3Int tilePosition = piece.cells[i] + piece.position;
-            this.tilemap.SetTile(tilePosition, null);
-        }
-    }
-// Check if a piece can be placed at a given position
-    public bool IsValidPosition(Piece piece, Vector3Int position)
-    {
-        RectInt bounds = this.Bounds;
-
-        for (int i = 0; i < piece.cells.Length; i++) 
-        {
-            Vector3Int tilePosition = piece.cells[i] + position;
-
-            if (!bounds.Contains((Vector2Int)tilePosition)) // Check out of bounds
-            {
-                return false;
-            }
-
-            if (this.tilemap.HasTile(tilePosition)) // Check if collision with existing tile
-            {
-                return false;
-            }
-        }
-
-        return true;
-    }
-// Clear full lines by checking each row
-    public void ClearLines()
-    {
-        RectInt bounds = this.Bounds;
-
-        int clearedLines=GetFullLines(bounds);
-
-        if (clearedLines > 0)
-        {
-            if (audioSource != null && lineClearClip != null)
-            {
-                audioSource.PlayOneShot(lineClearClip);
-            }
-            linesCleared += clearedLines;
-            UpdateGameStats(clearedLines);
-        }
-    }
-
-    private int GetFullLines(RectInt bounds)
-    {
-        int row = bounds.yMin;
-        int clearedLines=0;
-        while (row < bounds.yMax)
-        {
-            if (IsLineFull(row))
-            {
-                LineClear(row);
-                clearedLines++;
-            }
-            else
-            {
-                row++;
-            }
-        }
-        return clearedLines;
-    }
-
-    private void UpdateGameStats(int clearedLines)
-    {
-        UpdateScore(clearedLines);
-        UpdateLevel();
-
-        Debug.Log($"Cleared {clearedLines} lines. Total: {linesCleared}");
-        Debug.Log("-------------------------------------");
-        Debug.Log($"Score: {score}, Level: {level}");
-        // Notify multiplayer manager (will trigger garbage sending)
-        var adapter = GetComponent<BoardMultiplayerAdapter>();
-        if (adapter != null)
-        {
-            adapter.NotifyLinesCleared(clearedLines);
-        }
-    }
-
-    // Update score based on lines cleared and current level
-    private void UpdateScore(int lines)
-    {
-        int baseScore = 0;
-        switch (lines)
-        {
-            case 1: baseScore = 40; break;
-            case 2: baseScore = 100; break;
-            case 3: baseScore = 300; break;
-            case 4: baseScore = 1200; break;
-        }
-        Debug.Log($"Score increased by {baseScore * level} points");
-        score += baseScore * level;
-        Debug.Log($"New Score: {score}");
-        // Update score UI
-        Debug.Log("Updating score UI... - Before calling scoreUI.UpdateScore");
-        if (scoreUI != null)
-        {
-            scoreUI.UpdateScore(score);
-            Debug.Log("Score UI updated. - After calling scoreUI.UpdateScore");
-        }
-        
-    }
-// Increase level every 10 lines cleared
-    private void UpdateLevel()
-    {
-        int newLevel = (linesCleared / 10) + 1;
-        if (newLevel > level)
-        {
-            level = newLevel;
-            Debug.Log($"Level up! Now level {level}");
-        }
-    }
-
-    private bool IsLineFull(int row)
-    {
-        RectInt bounds = this.Bounds;
-
-        for (int col = bounds.xMin; col < bounds.xMax; col++)
-        {
-            Vector3Int position = new Vector3Int(col, row, 0);
-
-            if (!this.tilemap.HasTile(position))
-            {
-                return false;
-            }
-        }
-
-        return true;
-    }
-// Clear a specific line and move above lines down
-    private void LineClear(int row)
-    {
-        RectInt bounds = this.Bounds;
-
-        // Clear the full row
-        for (int col = bounds.xMin; col < bounds.xMax; col++)
-        {
-            Vector3Int position = new Vector3Int(col, row, 0);
-            this.tilemap.SetTile(position, null);
-        }
-
-        // Move all rows above down by one
-        MoveRowsDown(row, bounds);
-    }
-
-    private void MoveRowsDown(int row, RectInt bounds)
-    {
-        while (row < bounds.yMax)
-        {
-            for (int col = bounds.xMin; col < bounds.xMax; col++)
-            {
-                Vector3Int position = new Vector3Int(col, row + 1, 0);
-                TileBase above = this.tilemap.GetTile(position);
-
-                position = new Vector3Int(col, row, 0);
-                this.tilemap.SetTile(position, above);
-            }
-
-            row++;
-        }
-
+      Debug.LogError($"Invalid shape index: {shapeIndex}, defaulting to 0.");
+      shapeIndex = 0;
+      if (shapeIndex >= TetrisBlocks.Length)
+      {
+        Debug.LogError("Board: No valid shapes available!");
         return;
+      }
     }
 
-    // Handle game over state
-    private void GameOver()
+    TetrisBlockShapeData data = TetrisBlocks[shapeIndex];
+
+    if (data.tile == null)
     {
-        if (gameOver) return;
-
-        gameOver = true;
-
-        Debug.Log("Game Over!");
-
-        if (activePiece != null)
-        {
-            activePiece.enabled = false;
-        }
-        if (musicSource != null) {
-            musicSource.Stop();
-        }
-        SceneManager.LoadScene(5);// Restart the scene (goes to game over screen)
+      Debug.LogError($"Board: TetrisBlocks[{shapeIndex}] has null tile!");
+      return;
     }
 
-// Restart the game by resetting state and clearing the board
-    public void RestartGame()
+    activePiece.Initialize(this, spawnPos, data);
+
+    if (IsValidPosition(activePiece, spawnPos))
     {
-        tilemap.ClearAllTiles();
-
-        gameOver = false;
-        score = 0;
-        linesCleared = 0;
-        level = 1;
-        pendingGarbageLines = 0;
-
-        if (MultiplayerManager.Instance == null || MultiplayerManager.Instance.IsServer) // Only reset queue if not in multiplayer client mode
-        {
-            shapesQueue = new SharedShapesQueue();
-        }
-
-        if (activePiece != null) 
-        {
-            activePiece.enabled = true;
-        }
-
-        SpawnPiece();
-
-        Debug.Log("Game restarted!");
+      Set(activePiece);
     }
-
-    // --- Garbage System Public Interface ---
-
-    public void EnqueueGarbage(int count)
+    else
     {
-        if (count <= 0 || gameOver) return;
-        pendingGarbageLines += count;
-        Debug.Log($"[Board] Enqueued {count} garbage lines (total pending: {pendingGarbageLines})");
+      GameOver();
     }
 
-    public void ApplyPendingGarbage()
+    if (MultiplayerManager.Instance != null && MultiplayerManager.Instance.IsServer)
     {
-        if (pendingGarbageLines <= 0 || gameOver) return;
+      MultiplayerManager.Instance.BroadcastQueueUpdate();
+    }
+  }
 
-        int applyCount = Mathf.Min(pendingGarbageLines, maxGarbageApplyPerLock);
-        pendingGarbageLines -= applyCount;
+  public void SynchronizeQueue(QueueStateMessage queueState)
+  {
+    if (shapesQueue == null)
+    {
+      shapesQueue = new SharedShapesQueue(queueState.seed);
+    }
+    shapesQueue.ApplyQueueState(queueState);
+    Debug.Log($"Board: Queue synchronized with {queueState.upcomingShapes.Length} shapes");
+  }
 
-        ApplyGarbageLines(applyCount);
+  // Place piece tiles
+  public void Set(Piece piece)
+  {
+    for (int i = 0; i < piece.cells.Length; i++)
+    {
+      Vector3Int tilePosition = piece.cells[i] + piece.position;
+      tilemap.SetTile(tilePosition, piece.TBSData.tile);
+    }
+  }
+
+  // Remove piece tiles
+  public void Clear(Piece piece)
+  {
+    for (int i = 0; i < piece.cells.Length; i++)
+    {
+      Vector3Int tilePosition = piece.cells[i] + piece.position;
+      tilemap.SetTile(tilePosition, null);
+    }
+  }
+
+  public bool IsValidPosition(Piece piece, Vector3Int position)
+  {
+    RectInt bounds = Bounds;
+
+    for (int i = 0; i < piece.cells.Length; i++)
+    {
+      Vector3Int tilePosition = piece.cells[i] + position;
+
+      if (!bounds.Contains((Vector2Int)tilePosition))
+      {
+        return false;
+      }
+
+      if (tilemap.HasTile(tilePosition))
+      {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  public void ClearLines()
+  {
+    RectInt bounds = Bounds;
+    int clearedLines = GetFullLines(bounds);
+
+    if (clearedLines > 0)
+    {
+      if (audioSource != null && lineClearClip != null)
+      {
+        audioSource.PlayOneShot(lineClearClip);
+      }
+      linesCleared += clearedLines;
+      UpdateGameStats(clearedLines);
+    }
+  }
+
+  private int GetFullLines(RectInt bounds)
+  {
+    int row = bounds.yMin;
+    int clearedLines = 0;
+
+    while (row < bounds.yMax)
+    {
+      if (IsLineFull(row))
+      {
+        LineClear(row);
+        clearedLines++;
+      }
+      else
+      {
+        row++;
+      }
+    }
+    return clearedLines;
+  }
+
+  private void UpdateGameStats(int clearedLines)
+  {
+    UpdateScore(clearedLines);
+    UpdateLevel();
+
+    var adapter = GetComponent<BoardMultiplayerAdapter>();
+    if (adapter != null)
+    {
+      adapter.NotifyLinesCleared(clearedLines);
+    }
+  }
+
+  private void UpdateScore(int lines)
+  {
+    int baseScore = lines switch
+    {
+      1 => ScoreSingleLine,
+      2 => ScoreDoubleLine,
+      3 => ScoreTripleLine,
+      4 => ScoreTetrisLine,
+      _ => 0
+    };
+
+    score += baseScore * level;
+
+    if (scoreUI != null)
+    {
+      scoreUI.UpdateScore(score);
+    }
+  }
+
+  private void UpdateLevel()
+  {
+    int newLevel = (linesCleared / LinesPerLevel) + 1;
+    if (newLevel > level)
+    {
+      level = newLevel;
+      Debug.Log($"Level up! Now level {level}");
+    }
+  }
+
+  private bool IsLineFull(int row)
+  {
+    RectInt bounds = Bounds;
+
+    for (int col = bounds.xMin; col < bounds.xMax; col++)
+    {
+      Vector3Int position = new Vector3Int(col, row, 0);
+      if (!tilemap.HasTile(position))
+      {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  private void LineClear(int row)
+  {
+    RectInt bounds = Bounds;
+
+    for (int col = bounds.xMin; col < bounds.xMax; col++)
+    {
+      Vector3Int position = new Vector3Int(col, row, 0);
+      tilemap.SetTile(position, null);
     }
 
-    private void ApplyGarbageLines(int count)
+    MoveRowsDown(row, bounds);
+  }
+
+  private void MoveRowsDown(int row, RectInt bounds)
+  {
+    while (row < bounds.yMax)
     {
-        if (count <= 0) return;
+      for (int col = bounds.xMin; col < bounds.xMax; col++)
+      {
+        Vector3Int abovePos = new Vector3Int(col, row + 1, 0);
+        TileBase above = tilemap.GetTile(abovePos);
 
-        RectInt bounds = Bounds;
+        Vector3Int currentPos = new Vector3Int(col, row, 0);
+        tilemap.SetTile(currentPos, above);
+      }
+      row++;
+    }
+  }
 
-        // Shift existing tiles UP
-        bool topOut = ShiftExistingTilesUp(count, ref bounds);
-        if (!topOut)
+  private void GameOver()
+  {
+    if (gameOver)
+    {
+      return;
+    }
+
+    gameOver = true;
+
+    if (activePiece != null)
+    {
+      activePiece.enabled = false;
+    }
+    if (musicSource != null)
+    {
+      musicSource.Stop();
+    }
+
+    SceneManager.LoadScene(GameOverSceneIndex);
+  }
+
+  public void RestartGame()
+  {
+    tilemap.ClearAllTiles();
+
+    gameOver = false;
+    score = 0;
+    linesCleared = 0;
+    level = 1;
+    pendingGarbageLines = 0;
+
+    if (MultiplayerManager.Instance == null || MultiplayerManager.Instance.IsServer)
+    {
+      shapesQueue = new SharedShapesQueue();
+    }
+
+    if (activePiece != null)
+    {
+      activePiece.enabled = true;
+    }
+
+    SpawnPiece();
+  }
+
+  // Garbage System
+
+  public void EnqueueGarbage(int count)
+  {
+    if (count <= 0 || gameOver)
+    {
+      return;
+    }
+    pendingGarbageLines += count;
+  }
+
+  public void ApplyPendingGarbage()
+  {
+    if (pendingGarbageLines <= 0 || gameOver)
+    {
+      return;
+    }
+
+    int applyCount = Mathf.Min(pendingGarbageLines, maxGarbageApplyPerLock);
+    pendingGarbageLines -= applyCount;
+
+    ApplyGarbageLines(applyCount);
+  }
+
+  private void ApplyGarbageLines(int count)
+  {
+    if (count <= 0)
+    {
+      return;
+    }
+
+    RectInt bounds = Bounds;
+
+    bool canApply = ShiftExistingTilesUp(count, ref bounds);
+    if (!canApply)
+    {
+      return;
+    }
+
+    // Clear newly created gaps at bottom zone after shift
+    for (int y = bounds.yMin; y < bounds.yMin + count; y++)
+    {
+      for (int x = bounds.xMin; x < bounds.xMax; x++)
+      {
+        tilemap.SetTile(new Vector3Int(x, y, 0), null);
+      }
+    }
+
+    CreateBottomRows(count, bounds);
+  }
+
+  private void CreateBottomRows(int count, RectInt bounds)
+  {
+    for (int g = 0; g < count; g++)
+    {
+      int holeColumn = garbageRng.Next(bounds.xMin, bounds.xMax);
+
+      for (int x = bounds.xMin; x < bounds.xMax; x++)
+      {
+        if (x == holeColumn)
         {
-            return;
+          continue;
         }
 
-        // Clear old positions that were shifted (avoid duplication)
-        for (int y = bounds.yMin; y < bounds.yMin + count; y++)
+        TileBase garbageTile = TetrisBlocks.Length > 0 ? TetrisBlocks[0].tile : null;
+        if (garbageTile != null)
         {
-            for (int x = bounds.xMin; x < bounds.xMax; x++)
-            {
-                tilemap.SetTile(new Vector3Int(x, y, 0), null);
-            }
+          tilemap.SetTile(new Vector3Int(x, bounds.yMin + g, 0), garbageTile);
         }
-
-        // Create garbage rows at bottom
-        CreateBottomRows(count, bounds);
-
-        Debug.Log($"[Board] Applied {count} garbage lines. Remaining pending: {pendingGarbageLines}");
+      }
     }
+  }
 
-    private void CreateBottomRows(int count, RectInt bounds)
+  private bool ShiftExistingTilesUp(int count, ref RectInt bounds)
+  {
+    for (int y = bounds.yMax - 1; y >= bounds.yMin; y--)
     {
-        for (int g = 0; g < count; g++)
+      for (int x = bounds.xMin; x < bounds.xMax; x++)
+      {
+        Vector3Int fromPos = new Vector3Int(x, y, 0);
+        TileBase tile = tilemap.GetTile(fromPos);
+        if (tile != null)
         {
-            int holeColumn = garbageRng.Next(bounds.xMin, bounds.xMax);
-            for (int x = bounds.xMin; x < bounds.xMax; x++)
-            {
-                if (x == holeColumn) continue;
-
-                // Use a neutral tile: pick first tile or any
-                TileBase garbageTile = TetrisBlocks.Length > 0 ? TetrisBlocks[0].tile : null;
-                if (garbageTile != null)
-                {
-                    tilemap.SetTile(new Vector3Int(x, bounds.yMin + g, 0), garbageTile);
-                }
-            }
+          Vector3Int toPos = new Vector3Int(x, y + count, 0);
+          if (toPos.y >= bounds.yMax)
+          {
+            GameOver();
+            return false;
+          }
+          tilemap.SetTile(toPos, tile);
         }
+      }
     }
-
-    private bool ShiftExistingTilesUp(int count, ref RectInt bounds)
-    {
-        for (int y = bounds.yMax - 1; y >= bounds.yMin; y--)
-        {
-            for (int x = bounds.xMin; x < bounds.xMax; x++)
-            {
-                Vector3Int fromPos = new Vector3Int(x, y, 0);
-                TileBase tile = tilemap.GetTile(fromPos);
-                if (tile != null)
-                {
-                    Vector3Int toPos = new Vector3Int(x, y + count, 0);
-                    if (toPos.y >= bounds.yMax)
-                    {
-                        // Top-out
-                        Debug.Log("[Board] Garbage caused top-out");
-                        GameOver();
-                        return false;
-                    }
-                    tilemap.SetTile(toPos, tile);
-                }
-            }
-        }
-
-        return true;
-    }
+    return true;
+  }
 }
