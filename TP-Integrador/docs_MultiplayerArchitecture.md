@@ -14,23 +14,23 @@ The game uses a custom TCP line-based JSON protocol over `TcpListener` / `TcpCli
 ## 2. High-Level Topology
 
 ```
-+-----------------+                           +------------------+
-|   Host (Server) |                           |  Client Player   |
-|  Unity Instance |                           |  Unity Instance  |
-|-----------------|                           |------------------|
++-----------------+         +------------------+
+|   Host (Server) |         |  Client Player   |
+|  Unity Instance |         |  Unity Instance  |
+|-----------------|         |------------------|
 | MultiplayerMgr  |<--- Game State / Queue -->| MultiplayerMgr   |
-|  (role=Server)  |                           |  (role=Client)   |
-|     |           |                           |       |          |
-|  TcpServer      |<-- TCP Socket (lines) --> |  TcpClientPeer   |
-|     |           |                           |       |          |
-| AcceptLoop Thr  |                           | ReceiveLoop Thr  |
-| ClientConnection|                           |                  |
+|  (role=Server)  |         |  (role=Client)   |
+|   |     |         |   |    |
+|  TcpServer  |<-- TCP Socket (lines) --> |  TcpClientPeer   |
+|   |     |         |   |    |
+| AcceptLoop Thr  |         | ReceiveLoop Thr  |
+| ClientConnection|         |      |
 | RemoteBoardView |<-- BoardStateMessage ---->| BoardMultiplayer |
-| Local Board     |                          /| Adapter + Board  |
-| (Authoritative) |                         / | Local Board      |
-+-----------------+                        /  +------------------+
-                                           /
-                               (ThreadDispatcher marshals to Unity main thread)
+| Local Board   |        /| Adapter + Board  |
+| (Authoritative) |       / | Local Board  |
++-----------------+      /  +------------------+
+             /
+         (ThreadDispatcher marshals to Unity main thread)
 ```
 
 ## 3. Core Components
@@ -80,8 +80,8 @@ Utility:
 ```
 MultiplayerManager.HostGame()
   -> new TcpServer(port).Start()
-      -> AcceptLoop thread begins
-      -> Server awaits client handshakes
+  -> AcceptLoop thread begins
+  -> Server awaits client handshakes
   -> InitializeServerQueue()
   -> (If already initialized) InitializeGameState()
 ```
@@ -91,10 +91,10 @@ MultiplayerManager.HostGame()
 ```
 MultiplayerManager.JoinGame(ip)
   -> new TcpClientPeer(ip, port).Connect()
-      -> Establish TCP socket, start ReceiveLoop thread
-      -> Send handshake { role = "client" }
+  -> Establish TCP socket, start ReceiveLoop thread
+  -> Send handshake { role = "client" }
   -> If game already initialized on client:
-       UpdateGameState(Playing) & ResumeGame()
+   UpdateGameState(Playing) & ResumeGame()
   -> Optionally send immediate board snapshot (if configured)
 ```
 
@@ -178,30 +178,30 @@ Pseudo-dispatch (simplified from `MultiplayerManager` logic):
 switch (envelope.type)
 {
   case "handshake":
-     // Initialize sync (queue + game state)
-     BroadcastQueueUpdate();
-     BroadcastGameState();
-     break;
+   // Initialize sync (queue + game state)
+   BroadcastQueueUpdate();
+   BroadcastGameState();
+   break;
 
   case "board_state":
-     // Possibly ignored on server if server is authoritative
-     break;
+   // Possibly ignored on server if server is authoritative
+   break;
 
   case "player_action":
-     // Apply action -> update board -> broadcast board_state
-     break;
+   // Apply action -> update board -> broadcast board_state
+   break;
 
   case "queue_sync":
-     // Usually server -> clients; server seldom ingests this
-     break;
+   // Usually server -> clients; server seldom ingests this
+   break;
 
   case "game_state_update":
-     // Might validate timestamps or origin
-     break;
+   // Might validate timestamps or origin
+   break;
 
   case "garbage":
-     // Adjust board (inject lines), re-broadcast board_state
-     break;
+   // Adjust board (inject lines), re-broadcast board_state
+   break;
 }
 ```
 
@@ -258,16 +258,16 @@ switch (envelope.type)
 ```
 Server:
   MultiplayerManager
-     -> TcpServer
-        -> AcceptLoop Thread
-           -> ClientConnection (StartReceiving)
-              -> OnRawMessage -> HandleIncomingServerSide()
+   -> TcpServer
+  -> AcceptLoop Thread
+     -> ClientConnection (StartReceiving)
+    -> OnRawMessage -> HandleIncomingServerSide()
 
 Client:
   MultiplayerManager
-     -> TcpClientPeer
-        -> ReceiveLoop Thread -> OnRawMessage -> Dispatcher.Enqueue()
-           -> ApplyBoardState / UpdateGameState / QueueSync
+   -> TcpClientPeer
+  -> ReceiveLoop Thread -> OnRawMessage -> Dispatcher.Enqueue()
+     -> ApplyBoardState / UpdateGameState / QueueSync
 ```
 
 ## 13. Conversion Instructions (to PDF)

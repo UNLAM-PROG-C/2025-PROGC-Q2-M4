@@ -7,15 +7,15 @@ Shader "TextMeshPro/Mobile/Distance Field (Surface)" {
 
 Properties {
 	_FaceTex			("Fill Texture", 2D) = "white" {}
-	_FaceColor		    ("Fill Color", Color) = (1,1,1,1)
+	_FaceColor		  ("Fill Color", Color) = (1,1,1,1)
 	_FaceDilate			("Face Dilate", Range(-1,1)) = 0
 
-	_OutlineColor	    ("Outline Color", Color) = (0,0,0,1)
+	_OutlineColor	  ("Outline Color", Color) = (0,0,0,1)
 	_OutlineTex			("Outline Texture", 2D) = "white" {}
 	_OutlineWidth		("Outline Thickness", Range(0, 1)) = 0
 	_OutlineSoftness	("Outline Softness", Range(0,1)) = 0
 
-	_GlowColor		    ("Color", Color) = (0, 1, 0, 0.5)
+	_GlowColor		  ("Color", Color) = (0, 1, 0, 0.5)
 	_GlowOffset			("Offset", Range(-1,1)) = 0
 	_GlowInner			("Inner", Range(0,1)) = 0.05
 	_GlowOuter			("Outer", Range(0,1)) = 0.05

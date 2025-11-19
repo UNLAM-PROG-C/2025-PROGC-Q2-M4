@@ -6,10 +6,10 @@
 Shader "TextMeshPro/Mobile/Distance Field SSD" {
 
 Properties {
-	_FaceColor		    ("Face Color", Color) = (1,1,1,1)
+	_FaceColor		  Face Color", Color) = (1,1,1,1)
 	_FaceDilate			("Face Dilate", Range(-1,1)) = 0
 
-	_OutlineColor	    ("Outline Color", Color) = (0,0,0,1)
+	_OutlineColor	  Outline Color", Color) = (0,0,0,1)
 	_OutlineWidth		("Outline Thickness", Range(0,1)) = 0
 	_OutlineSoftness	("Outline Softness", Range(0,1)) = 0
 
@@ -54,7 +54,7 @@ Properties {
 	_StencilWriteMask	("Stencil Write Mask", Float) = 255
 	_StencilReadMask	("Stencil Read Mask", Float) = 255
 
-    _CullMode           ("Cull Mode", Float) = 0
+  ullMode      ull Mode", Float) = 0
 	_ColorMask			("Color Mask", Float) = 15
 }
 

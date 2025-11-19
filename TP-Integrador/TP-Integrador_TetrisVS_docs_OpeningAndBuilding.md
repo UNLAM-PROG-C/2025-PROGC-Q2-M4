@@ -131,15 +131,15 @@ Recommended structure after several builds:
 ```
 TP-Integrador/
   TetrisVS/
-    Builds/
-      StandaloneWindows64/
-        TetrisVS.exe
-        TetrisVS_Data/
-      StandaloneLinux64/
-        TetrisVS
-        TetrisVS_Data/
-      StandaloneOSX/
-        TetrisVS.app
+  Builds/
+    StandaloneWindows64/
+    TetrisVS.exe
+    TetrisVS_Data/
+    StandaloneLinux64/
+    TetrisVS
+    TetrisVS_Data/
+    StandaloneOSX/
+    TetrisVS.app
 ```
 
 If you used custom path flags: `-customBuildPath=Builds/Manual`, adjust accordingly.

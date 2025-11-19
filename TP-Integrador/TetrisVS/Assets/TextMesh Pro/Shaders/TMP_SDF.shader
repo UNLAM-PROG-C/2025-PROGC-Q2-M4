@@ -4,10 +4,10 @@ Properties {
 	_FaceTex			("Face Texture", 2D) = "white" {}
 	_FaceUVSpeedX		("Face UV Speed X", Range(-5, 5)) = 0.0
 	_FaceUVSpeedY		("Face UV Speed Y", Range(-5, 5)) = 0.0
-	_FaceColor		    ("Face Color", Color) = (1,1,1,1)
+	_FaceColor		  or", Color) = (1,1,1,1)
 	_FaceDilate			("Face Dilate", Range(-1,1)) = 0
 
-	_OutlineColor	    ("Outline Color", Color) = (0,0,0,1)
+	_OutlineColor	  Color", Color) = (0,0,0,1)
 	_OutlineTex			("Outline Texture", 2D) = "white" {}
 	_OutlineUVSpeedX	("Outline UV Speed X", Range(-5, 5)) = 0.0
 	_OutlineUVSpeedY	("Outline UV Speed Y", Range(-5, 5)) = 0.0
@@ -21,7 +21,7 @@ Properties {
 	_BevelRoundness		("Bevel Roundness", Range(0,1)) = 0
 
 	_LightAngle			("Light Angle", Range(0.0, 6.2831853)) = 3.1416
-	_SpecularColor	    ("Specular", Color) = (1,1,1,1)
+	_SpecularColor	  ", Color) = (1,1,1,1)
 	_SpecularPower		("Specular", Range(0,4)) = 2.0
 	_Reflectivity		("Reflectivity", Range(5.0,15.0)) = 10
 	_Diffuse			("Diffuse", Range(0,1)) = 0.5
@@ -37,13 +37,13 @@ Properties {
 	_EnvMatrixRotation	("Texture Rotation", vector) = (0, 0, 0, 0)
 
 
-	_UnderlayColor	    ("Border Color", Color) = (0,0,0, 0.5)
+	_UnderlayColor	  olor", Color) = (0,0,0, 0.5)
 	_UnderlayOffsetX	("Border OffsetX", Range(-1,1)) = 0
 	_UnderlayOffsetY	("Border OffsetY", Range(-1,1)) = 0
 	_UnderlayDilate		("Border Dilate", Range(-1,1)) = 0
 	_UnderlaySoftness	("Border Softness", Range(0,1)) = 0
 
-	_GlowColor		    ("Color", Color) = (0, 1, 0, 0.5)
+	_GlowColor		  Color) = (0, 1, 0, 0.5)
 	_GlowOffset			("Offset", Range(-1,1)) = 0
 	_GlowInner			("Inner", Range(0,1)) = 0.05
 	_GlowOuter			("Outer", Range(0,1)) = 0.05
@@ -148,20 +148,20 @@ SubShader {
 			float4	mask			: TEXCOORD2;		// Position in object space(xy), pixel Size(zw)
 			float3	viewDir			: TEXCOORD3;
 
-		    #if (UNDERLAY_ON || UNDERLAY_INNER)
+		  LAY_ON || UNDERLAY_INNER)
 			float4	texcoord2		: TEXCOORD4;		// u,v, scale, bias
 			fixed4	underlayColor	: COLOR1;
-		    #endif
+		  
 
-		    float4 textures			: TEXCOORD5;
+		  tures			: TEXCOORD5;
 		};
 
 		// Used by Unity internally to handle Texture Tiling and Offset.
 		float4 _FaceTex_ST;
 		float4 _OutlineTex_ST;
 		float _UIMaskSoftnessX;
-        float _UIMaskSoftnessY;
-        int _UIVertexColorAlwaysGammaSpace;
+    sY;
+    waysGammaSpace;
 
 		pixel_t VertShader(vertex_t input)
 		{
@@ -193,13 +193,13 @@ SubShader {
 
 			float alphaClip = (1.0 - _OutlineWidth * _ScaleRatioA - _OutlineSoftness * _ScaleRatioA);
 
-		    #if GLOW_ON
+		  N
 			alphaClip = min(alphaClip, 1.0 - _GlowOffset * _ScaleRatioB - _GlowOuter * _ScaleRatioB);
-		    #endif
+		  
 
 			alphaClip = alphaClip / 2.0 - ( .5 / scale) - weight;
 
-		    #if (UNDERLAY_ON || UNDERLAY_INNER)
+		  LAY_ON || UNDERLAY_INNER)
 			float4 underlayColor = _UnderlayColor;
 			underlayColor.rgb *= underlayColor.a;
 
@@ -210,7 +210,7 @@ SubShader {
 			float x = -(_UnderlayOffsetX * _ScaleRatioC) * _GradientScale / _TextureWidth;
 			float y = -(_UnderlayOffsetY * _ScaleRatioC) * _GradientScale / _TextureHeight;
 			float2 bOffset = float2(x, y);
-		    #endif
+		  
 
 			// Generate UV for the Masking Texture
 			float4 clampedRect = clamp(_ClipRect, -2e10, 2e10);
@@ -222,10 +222,10 @@ SubShader {
 			float2 outlineUV = TRANSFORM_TEX(textureUV, _OutlineTex);
 
 
-            if (_UIVertexColorAlwaysGammaSpace && !IsGammaSpace())
-            {
-                input.color.rgb = UIGammaToLinear(input.color.rgb);
-            }
+      pace && !IsGammaSpace())
+      
+        color.rgb);
+      
 			output.position = vPosition;
 			output.color = input.color;
 			output.atlas =	input.texcoord0;
@@ -249,9 +249,9 @@ SubShader {
 
 			float c = tex2D(_MainTex, input.atlas).a;
 
-		    #ifndef UNDERLAY_ON
+		  DERLAY_ON
 			clip(c - input.param.x);
-		    #endif
+		  
 
 			float	scale	= input.param.y;
 			float	bias	= input.param.z;
@@ -271,7 +271,7 @@ SubShader {
 
 			faceColor = GetColor(sd, faceColor, outlineColor, outline, softness);
 
-		    #if BEVEL_ON
+		  ON
 			float3 dxy = float3(0.5 / _TextureWidth, 0.5 / _TextureHeight, 0);
 			float3 n = GetSurfaceNormal(input.atlas, weight, dxy);
 
@@ -288,34 +288,34 @@ SubShader {
 
 			fixed4 reflcol = texCUBE(_Cube, reflect(input.viewDir, -n));
 			faceColor.rgb += reflcol.rgb * lerp(_ReflectFaceColor.rgb, _ReflectOutlineColor.rgb, saturate(sd + outline * 0.5)) * faceColor.a;
-		    #endif
+		  
 
-		    #if UNDERLAY_ON
+		  AY_ON
 			float d = tex2D(_MainTex, input.texcoord2.xy).a * input.texcoord2.z;
 			faceColor += input.underlayColor * saturate(d - input.texcoord2.w) * (1 - faceColor.a);
-		    #endif
+		  
 
-		    #if UNDERLAY_INNER
+		  AY_INNER
 			float d = tex2D(_MainTex, input.texcoord2.xy).a * input.texcoord2.z;
 			faceColor += input.underlayColor * (1 - saturate(d - input.texcoord2.w)) * saturate(1 - sd) * (1 - faceColor.a);
-		    #endif
+		  
 
-		    #if GLOW_ON
+		  N
 			float4 glowColor = GetGlowColor(sd, scale);
 			faceColor.rgb += glowColor.rgb * glowColor.a;
-		    #endif
+		  
 
 		// Alternative implementation to UnityGet2DClipping with support for softness.
-		    #if UNITY_UI_CLIP_RECT
+		  UI_CLIP_RECT
 			half2 m = saturate((_ClipRect.zw - _ClipRect.xy - abs(input.mask.xy)) * input.mask.zw);
 			faceColor *= m.x * m.y;
-		    #endif
+		  
 
-		    #if UNITY_UI_ALPHACLIP
+		  UI_ALPHACLIP
 			clip(faceColor.a - 0.001);
-		    #endif
+		  
 
-  		    return faceColor * input.color.a;
+  		  eColor * input.color.a;
 		}
 		ENDCG
 	}

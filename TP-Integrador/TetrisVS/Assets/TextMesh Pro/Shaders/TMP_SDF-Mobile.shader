@@ -6,14 +6,14 @@
 Shader "TextMeshPro/Mobile/Distance Field" {
 
 Properties {
-	_FaceColor          ("Face Color", Color) = (1,1,1,1)
+	_FaceColor    Face Color", Color) = (1,1,1,1)
 	_FaceDilate			("Face Dilate", Range(-1,1)) = 0
 
-	_OutlineColor	    ("Outline Color", Color) = (0,0,0,1)
+	_OutlineColor	  Outline Color", Color) = (0,0,0,1)
 	_OutlineWidth		("Outline Thickness", Range(0,1)) = 0
 	_OutlineSoftness	("Outline Softness", Range(0,1)) = 0
 
-	_UnderlayColor	    ("Border Color", Color) = (0,0,0,.5)
+	_UnderlayColor	  Border Color", Color) = (0,0,0,.5)
 	_UnderlayOffsetX 	("Border OffsetX", Range(-1,1)) = 0
 	_UnderlayOffsetY 	("Border OffsetY", Range(-1,1)) = 0
 	_UnderlayDilate		("Border Dilate", Range(-1,1)) = 0
@@ -119,8 +119,8 @@ SubShader {
 		};
 
 		float _UIMaskSoftnessX;
-        float _UIMaskSoftnessY;
-        int _UIVertexColorAlwaysGammaSpace;
+    t _UIMaskSoftnessY;
+    _UIVertexColorAlwaysGammaSpace;
 
 		pixel_t VertShader(vertex_t input)
 		{
@@ -154,11 +154,11 @@ SubShader {
 			float bias = (0.5 - weight) * scale - 0.5;
 			float outline = _OutlineWidth * _ScaleRatioA * 0.5 * scale;
 
-            if (_UIVertexColorAlwaysGammaSpace && !IsGammaSpace())
-            {
-                input.color.rgb = UIGammaToLinear(input.color.rgb);
-            }
-            float opacity = input.color.a;
+      IVertexColorAlwaysGammaSpace && !IsGammaSpace())
+      
+        lor.rgb = UIGammaToLinear(input.color.rgb);
+      
+      opacity = input.color.a;
 			#if (UNDERLAY_ON | UNDERLAY_INNER)
 			opacity = 1.0;
 			#endif

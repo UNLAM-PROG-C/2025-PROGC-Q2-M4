@@ -9,13 +9,15 @@ public class AutoSetupMultiplayer : MonoBehaviour
 
     private void Start()
     {
+        // Create MultiplayerManager if it doesn't exist
         if (MultiplayerManager.Instance == null)
-        {// Create MultiplayerManager if it doesn't exist
+        {
             var mm = new GameObject("MultiplayerManager");
-            mm.AddComponent<MultiplayerManager>();
+            mm.AddComponent<MultiplayerManager>(); // Unity native function
         }
-// Setup local board and remote view
-        Board localBoard = FindObjectOfType<Board>();
+        
+        // Setup local board and remote view
+        Board localBoard = FindObjectOfType<Board>(); // Unity native function
         if (localBoard == null)
         {
             Debug.LogError("[AutoSetupMultiplayer] No Board encontrado.");
@@ -23,10 +25,10 @@ public class AutoSetupMultiplayer : MonoBehaviour
         }
 
         // Adapter
-        var adapter = localBoard.GetComponent<BoardMultiplayerAdapter>(); 
+        var adapter = localBoard.GetComponent<BoardMultiplayerAdapter>();  // Unity native function
         if (adapter == null)
         {
-            adapter = localBoard.gameObject.AddComponent<BoardMultiplayerAdapter>();
+            adapter = localBoard.gameObject.AddComponent<BoardMultiplayerAdapter>(); // Unity native function
         }
         MultiplayerManager.Instance.RegisterLocalAdapter(adapter);
 
@@ -50,27 +52,28 @@ public class AutoSetupMultiplayer : MonoBehaviour
         if (FindObjectOfType<DebugOverlay>() == null)
         {
             var dbg = new GameObject("DebugOverlay");
-            dbg.AddComponent<DebugOverlay>();
+            dbg.AddComponent<DebugOverlay>(); // Unity native function
         }
     }
-// Create a remote board view at the specified position
+
+    // Create a remote board view at the specified position
     private RemoteBoardView CreateRemote(Vector3 pos)
     {
         GameObject root;
         if (remoteBoardPrefab != null)
-            root = Instantiate(remoteBoardPrefab, pos, Quaternion.identity); 
-        else
-        { // Create basic remote board structure
+            root = Instantiate(remoteBoardPrefab, pos, Quaternion.identity); // Unity native function
+        else // Create basic remote board structure
+        {
             root = new GameObject("OpponentBoardRoot");
             root.transform.position = pos;
-            root.AddComponent<Grid>();
+            root.AddComponent<Grid>(); // Unity native function
             var tgo = new GameObject("Tilemap");
             tgo.transform.SetParent(root.transform, false);
-            tgo.AddComponent<Tilemap>();
-            tgo.AddComponent<TilemapRenderer>();
+            tgo.AddComponent<Tilemap>(); // Unity native function
+            tgo.AddComponent<TilemapRenderer>(); // Unity native function
         }
-        var rv = root.GetComponent<RemoteBoardView>();
-        if (rv == null) rv = root.AddComponent<RemoteBoardView>();
+        var rv = root.GetComponent<RemoteBoardView>(); // Unity native function
+        if (rv == null) rv = root.AddComponent<RemoteBoardView>(); // Unity native function
         return rv;
     }
 }

@@ -9,7 +9,8 @@ public class GhostPiece : MonoBehaviour
     public Tilemap tilemap { get; private set; }
     public Vector3Int position { get; private set; }
     public Vector3Int[] cells { get; private set; }
-// Initialize references and cell array
+
+    // Initialize references and cell array
     private void Awake()
     {
         this.tilemap = GetComponentInChildren<Tilemap>();

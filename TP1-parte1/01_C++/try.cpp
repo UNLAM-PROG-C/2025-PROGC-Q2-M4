@@ -4,7 +4,7 @@ int main()
 {
   int num1, num2, sum;
 
-  std::cout << "Introduce el primer número:                                                                                                                               ";
+  std::cout << "Introduce el primer número:                                                                 ";
   std::cin >> num1;
 
   std::cout << "Introduce el segundo número: ";

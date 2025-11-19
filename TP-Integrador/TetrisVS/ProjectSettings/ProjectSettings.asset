@@ -28,17 +28,17 @@ PlayerSettings:
   m_SplashScreenBackgroundLandscapeAspect: 1
   m_SplashScreenBackgroundPortraitAspect: 1
   m_SplashScreenBackgroundLandscapeUvs:
-    serializedVersion: 2
-    x: 0
-    y: 0
-    width: 1
-    height: 1
+  rializedVersion: 2
+   0
+   0
+  dth: 1
+  ight: 1
   m_SplashScreenBackgroundPortraitUvs:
-    serializedVersion: 2
-    x: 0
-    y: 0
-    width: 1
-    height: 1
+  rializedVersion: 2
+   0
+   0
+  dth: 1
+  ight: 1
   m_SplashScreenLogos: []
   m_VirtualRealitySplashScreen: {fileID: 0}
   m_HolographicTrackingLossScreen: {fileID: 0}
@@ -152,7 +152,7 @@ PlayerSettings:
   xboxOneDisableKinectGpuReservation: 1
   xboxOneEnable7thCore: 1
   vrSettings:
-    enable360StereoCapture: 0
+  able360StereoCapture: 0
   isWsaHolographicRemotingEnabled: 0
   enableFrameTimingStats: 0
   enableOpenGLProfilerGPURecorders: 1
@@ -167,12 +167,12 @@ PlayerSettings:
   androidMaxAspectRatio: 2.4
   androidMinAspectRatio: 1
   applicationIdentifier:
-    Standalone: com.DefaultCompany.2D-URP
+  andalone: com.DefaultCompany.2D-URP
   buildNumber:
-    Standalone: 0
-    VisionOS: 0
-    iPhone: 0
-    tvOS: 0
+  andalone: 0
+  sionOS: 0
+  hone: 0
+  OS: 0
   overrideDefaultApplicationIdentifier: 1
   AndroidBundleVersionCode: 1
   AndroidMinSdkVersion: 23
@@ -219,15 +219,15 @@ PlayerSettings:
   iOSLaunchScreenPortrait: {fileID: 0}
   iOSLaunchScreenLandscape: {fileID: 0}
   iOSLaunchScreenBackgroundColor:
-    serializedVersion: 2
-    rgba: 0
+  rializedVersion: 2
+  ba: 0
   iOSLaunchScreenFillPct: 100
   iOSLaunchScreenSize: 100
   iOSLaunchScreeniPadType: 0
   iOSLaunchScreeniPadImage: {fileID: 0}
   iOSLaunchScreeniPadBackgroundColor:
-    serializedVersion: 2
-    rgba: 0
+  rializedVersion: 2
+  ba: 0
   iOSLaunchScreeniPadFillPct: 100
   iOSLaunchScreeniPadSize: 100
   iOSLaunchScreenCustomStoryboardPath: 
@@ -284,8 +284,8 @@ PlayerSettings:
   androidUseCustomKeystore: 0
   m_AndroidBanners:
   - width: 320
-    height: 180
-    banner: {fileID: 0}
+  ight: 180
+  nner: {fileID: 0}
   androidGamepadSupportLevel: 0
   AndroidMinifyRelease: 0
   AndroidMinifyDebug: 0
@@ -295,17 +295,17 @@ PlayerSettings:
   androidSymbolsSizeThreshold: 800
   m_BuildTargetIcons:
   - m_BuildTarget: 
-    m_Icons:
-    - serializedVersion: 2
-      m_Icon: {fileID: 2800000, guid: 5d8147b15abf2da40ac1874e8b61f0db, type: 3}
-      m_Width: 128
-      m_Height: 128
-      m_Kind: 0
+  Icons:
+  serializedVersion: 2
+  m_Icon: {fileID: 2800000, guid: 5d8147b15abf2da40ac1874e8b61f0db, type: 3}
+  m_Width: 128
+  m_Height: 128
+  m_Kind: 0
   m_BuildTargetPlatformIcons: []
   m_BuildTargetBatching:
   - m_BuildTarget: Standalone
-    m_StaticBatching: 1
-    m_DynamicBatching: 0
+  StaticBatching: 1
+  DynamicBatching: 0
   m_BuildTargetShaderSettings: []
   m_BuildTargetGraphicsJobs: []
   m_BuildTargetGraphicsJobMode: []
@@ -318,9 +318,9 @@ PlayerSettings:
   openGLRequireES32: 0
   m_TemplateCustomTags: {}
   mobileMTRendering:
-    Android: 1
-    iPhone: 1
-    tvOS: 1
+  droid: 1
+  hone: 1
+  OS: 1
   m_BuildTargetGroupLightmapEncodingQuality: []
   m_BuildTargetGroupHDRCubemapEncodingQuality: []
   m_BuildTargetGroupLightmapSettings: []
@@ -596,7 +596,7 @@ PlayerSettings:
   additionalCompilerArguments: {}
   platformArchitecture: {}
   scriptingBackend:
-    Android: 1
+  droid: 1
   il2cppCompilerConfiguration: {}
   il2cppCodeGeneration: {}
   il2cppStacktraceInformation: {}
@@ -671,16 +671,16 @@ PlayerSettings:
   vrEditorSettings: {}
   cloudServicesEnabled: {}
   luminIcon:
-    m_Name: 
-    m_ModelFolderPath: 
-    m_PortalFolderPath: 
+  Name: 
+  ModelFolderPath: 
+  PortalFolderPath: 
   luminCert:
-    m_CertPath: 
-    m_SignPackage: 1
+  CertPath: 
+  SignPackage: 1
   luminIsChannelApp: 0
   luminVersion:
-    m_VersionCode: 1
-    m_VersionName: 
+  VersionCode: 1
+  VersionName: 
   hmiPlayerDataPath: 
   hmiForceSRGBBlit: 1
   embeddedLinuxEnableGamepadInput: 0

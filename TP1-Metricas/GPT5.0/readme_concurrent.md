@@ -69,14 +69,14 @@ python matrix_concurrent.py --rowsA 300 --colsA 400 --colsB 250 \
   "pattern": "sequential",
   "operations": {...},
   "timing": {
-    "wall_total": 0.8421,
-    "cpu_time_main": 0.6032,
-    "phases": {...}
+  all_total": 0.8421,
+  pu_time_main": 0.6032,
+  hases": {...}
   },
   "blocked": {
-    "block_rows": 96,
-    "block_cols": 96,
-    "tiles": 12
+  lock_rows": 96,
+  lock_cols": 96,
+  iles": 12
   },
   "verified_equal_to_sequential": true
 }
